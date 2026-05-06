@@ -1,0 +1,6 @@
+.DS_Store
+*.log
+node_modules/
+
+# Landing has its own git repo
+landing/

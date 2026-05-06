@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XBoost</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="login-content">
+      <img class="login-logo" src="icons/logo.png" alt="XBoost" />
+      <h2 class="login-title">Welcome back</h2>
+      <p class="login-subtitle">Enter your access key to start automating X.</p>
+      <form id="login-form" autocomplete="off">
+        <input
+          type="password"
+          id="login-key-input"
+          placeholder="Paste your access key..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button type="submit" id="login-submit-btn">
+          <span>Sign in</span>
+          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 8h10m0 0L8 3m5 5l-5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <p id="login-error" class="login-error hidden"></p>
+      </form>
+      <p class="login-hint">
+        Don't have an account?
+        <a href="https://x.com/" target="_blank" rel="noopener noreferrer">Create one →</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- App Shell (placeholder) -->
+  <div id="app" class="hidden">
+    <header id="header">
+      <button id="menu-btn" class="icon-btn" title="Menu" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="header-left">
+        <img class="logo" src="icons/logo.png" alt="XBoost" />
+        <h1>XBoost</h1>
+      </div>
+      <button id="auto-toggle" class="auto-toggle" type="button" data-on="false" aria-pressed="false" aria-label="Toggle fully automatic mode">
+        <svg class="auto-toggle-bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M13 2L4 14h7l-1 8 10-12h-7l0-8z"/>
+        </svg>
+        <span class="auto-toggle-label">Auto</span>
+      </button>
+    </header>
+
+    <!-- Drawer -->
+    <div id="drawer-backdrop" class="hidden" aria-hidden="true"></div>
+    <aside id="drawer" class="hidden" aria-label="Navigation menu">
+      <div class="drawer-header">
+        <div class="header-left">
+          <img class="logo" src="icons/logo.png" alt="XBoost" />
+          <h2>XBoost</h2>
+        </div>
+        <button id="drawer-close-btn" class="icon-btn" aria-label="Close menu">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="drawer-nav">
+        <button class="nav-item active" data-page="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h4l3 9 4-18 3 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Daily activity</span>
+        </button>
+        <button class="nav-item" data-page="topics">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/></svg>
+          <span>Topics</span>
+        </button>
+        <button class="nav-item" data-page="brand">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 21V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13M3 21h18M9 9h6M9 13h6M9 17h4M7 6V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Brand profile</span>
+        </button>
+        <button class="nav-item" data-page="accounts">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Accounts</span>
+        </button>
+        <button class="nav-item" data-page="settings">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main id="content">
+      <section class="page" data-page="dashboard">
+        <h2 class="page-title">Daily activity</h2>
+        <p class="page-sub">Your X engagement at a glance.</p>
+        <div class="placeholder-card">
+          <div class="placeholder-stat">
+            <span class="placeholder-stat-label">Replies today</span>
+            <span class="placeholder-stat-value">—</span>
+          </div>
+          <div class="placeholder-stat">
+            <span class="placeholder-stat-label">Posts queued</span>
+            <span class="placeholder-stat-value">—</span>
+          </div>
+          <div class="placeholder-stat">
+            <span class="placeholder-stat-label">Active accounts</span>
+            <span class="placeholder-stat-value">—</span>
+          </div>
+        </div>
+
+        <h3 class="section-title">Quick actions</h3>
+        <div class="actions-list" id="actions-list">
+          <button class="action-btn" type="button" data-action="open-messages">
+            <span class="action-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 6.5L12 13 3 6.5M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="action-label">Open Messages</span>
+            <svg class="action-chevron" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="section-header">
+          <h3 class="section-title">Top conversations</h3>
+          <button id="convos-refresh-btn" class="link-btn" type="button">Refresh</button>
+        </div>
+        <ul id="convos-list" class="convo-list" aria-live="polite"></ul>
+        <p id="convos-status" class="convos-status">Open Messages to load conversations.</p>
+        <button id="convos-hi-all-btn" class="primary-btn hidden" type="button">Send "hi" to all 5</button>
+      </section>
+
+      <section class="page hidden" data-page="topics">
+        <h2 class="page-title">Topics</h2>
+        <p class="page-sub">Pick the conversations XBoost should jump into.</p>
+        <p class="page-empty">No topics configured yet.</p>
+      </section>
+
+      <section class="page hidden" data-page="brand">
+        <h2 class="page-title">Brand profile</h2>
+        <p class="page-sub">Voice, tone, and what you're promoting.</p>
+        <p class="page-empty">Brand profile coming soon.</p>
+      </section>
+
+      <section class="page hidden" data-page="accounts">
+        <h2 class="page-title">Accounts</h2>
+        <p class="page-sub">Connected X accounts under your control.</p>
+        <p class="page-empty">No accounts linked yet.</p>
+      </section>
+
+      <section class="page hidden" data-page="settings">
+        <h2 class="page-title">Settings</h2>
+        <p class="page-sub">Preferences and access.</p>
+        <button id="logout-btn" class="ghost-btn" type="button">Sign out</button>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
