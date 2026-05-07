@@ -675,59 +675,38 @@ body {
   border-color: var(--text-secondary);
 }
 
-/* ─── Skeletons ─── */
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--surface-muted) 0%,
-    var(--border-light) 50%,
-    var(--surface-muted) 100%
-  );
-  background-size: 200% 100%;
-  border-radius: var(--radius-md);
-  animation: xbSkeletonShimmer 1.4s ease-in-out infinite;
-}
-@keyframes xbSkeletonShimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-.skel-line { height: 14px; border-radius: 6px; }
-.skel-line-lg { height: 20px; border-radius: 6px; }
-.skel-line-sm { height: 10px; border-radius: 5px; }
-.skel-block { height: 56px; border-radius: var(--radius-md); }
-.skel-circle { border-radius: 50%; }
-.skel-w-90 { width: 90%; }
-.skel-w-70 { width: 70%; }
-.skel-w-50 { width: 50%; }
-.skel-w-30 { width: 30%; }
-.skel-stack { display: flex; flex-direction: column; gap: 6px; }
-
-/* Skeleton row inside the suggestions panel — mimics the option-row layout
- * (text bubble + circular send button) so the swap to real content is silent. */
-.skel-option-row {
+/* ─── Logo loader (bouncing mascot) ───
+ * Universal loading indicator across the app. Replaces skeleton placeholders
+ * and spinners — any "we're loading" surface drops a .logo-loader. */
+.logo-loader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 6px 6px 12px;
-  background: var(--surface-muted);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
+  justify-content: center;
 }
-.skel-option-row .skel-line { flex: 1; min-width: 0; }
-.skel-option-row .skel-circle { flex-shrink: 0; width: 32px; height: 32px; }
-
-/* Compact skeleton for the on-page chip-bar dropdown panel (uses dark
- * neutrals so it reads on X's dark theme). */
-.xb-skel {
-  background: linear-gradient(
-    90deg,
-    rgba(127,127,127,0.12) 0%,
-    rgba(127,127,127,0.22) 50%,
-    rgba(127,127,127,0.12) 100%
-  );
-  background-size: 200% 100%;
-  border-radius: 6px;
-  animation: xbSkeletonShimmer 1.4s ease-in-out infinite;
+.logo-loader::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 36px;
+  background-image: url('icons/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: xliftLogoJump 0.85s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  transform-origin: 50% 100%;
+}
+.logo-loader.is-sm::before { width: 16px; height: 16px; }
+.logo-loader.is-lg::before { width: 56px; height: 56px; }
+.logo-loader.is-block {
+  width: 100%;
+  padding: 32px 0;
+}
+@keyframes xliftLogoJump {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-loader::before { animation: none; }
 }
 
 /* ─── Brand profile ─── */
@@ -881,16 +860,18 @@ body {
 .brand-generate-btn[data-busy="true"] .brand-generate-label { opacity: 0.6; }
 .brand-spinner {
   display: none;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  border-top-color: #0a0a0a;
-  border-radius: 50%;
-  animation: brandSpin 0.7s linear infinite;
+  width: 16px;
+  height: 16px;
+  background-image: url('icons/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: xliftLogoJump 0.85s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  transform-origin: 50% 100%;
 }
 .brand-generate-btn[data-busy="true"] .brand-spinner { display: inline-block; }
-@keyframes brandSpin {
-  to { transform: rotate(360deg); }
+@media (prefers-reduced-motion: reduce) {
+  .brand-spinner { animation: none; }
 }
 
 .brand-generate-status {

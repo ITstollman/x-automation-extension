@@ -19,30 +19,42 @@
   }
   window.__xliftSuggestionsMounted = true;
 
-  // One-shot stylesheet for skeleton shimmer. Lives in the host page so
-  // chip-bar children (which render directly in the X DOM, not in our
-  // shadow root) can use the .xb-skel class.
-  if (!document.getElementById('xb-skel-styles')) {
+  // One-shot stylesheet for the bouncing-logo loader. Lives in the host page
+  // so chip-bar children (which render directly in the X DOM, not in our
+  // shadow root) can use the .xb-logo-loader class.
+  if (!document.getElementById('xb-loader-styles')) {
+    const logoUrl = chrome.runtime.getURL('icons/logo.png');
     const styleTag = document.createElement('style');
-    styleTag.id = 'xb-skel-styles';
+    styleTag.id = 'xb-loader-styles';
     styleTag.textContent = `
-      .xb-skel {
-        background: linear-gradient(
-          90deg,
-          rgba(127,127,127,0.10) 0%,
-          rgba(127,127,127,0.24) 50%,
-          rgba(127,127,127,0.10) 100%
-        );
-        background-size: 200% 100%;
-        animation: xbSkelShimmer 1.4s ease-in-out infinite;
-        border-radius: 6px;
+      .xb-logo-loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 28px 0;
       }
-      @keyframes xbSkelShimmer {
-        0%   { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+      .xb-logo-loader::before {
+        content: "";
+        display: block;
+        width: 36px;
+        height: 36px;
+        background-image: url('${logoUrl}');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: xbLogoJump 0.85s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        transform-origin: 50% 100%;
+      }
+      @media (prefers-color-scheme: dark) {
+        .xb-logo-loader::before { filter: invert(1); }
+      }
+      @keyframes xbLogoJump {
+        0%, 100% { transform: translateY(0); }
+        50%      { transform: translateY(-10px); }
       }
       @media (prefers-reduced-motion: reduce) {
-        .xb-skel { animation: none; }
+        .xb-logo-loader::before { animation: none; }
       }
     `;
     document.head.appendChild(styleTag);
@@ -973,33 +985,8 @@ Generate 4 short reply tweets I might post.
       const populateUrl = location.pathname;
       bar.dataset.convoUrl = populateUrl;
 
-      // Skeleton loading state — 4 rows mirroring the option-row layout
-      // (text bubble + circular send button) so the swap to real suggestions
-      // is silent (no layout shift, no "Generating…" italic).
-      panel.innerHTML = "";
-      for (let i = 0; i < 4; i++) {
-        const row = document.createElement("div");
-        // Match xb-option visual: same row chrome, but with skeleton fills.
-        row.style.cssText = [
-          "display: flex",
-          "align-items: center",
-          "gap: 8px",
-          "padding: 8px 10px 8px 14px",
-          "background: rgba(127,127,127,0.10)",
-          "border: 1px solid rgba(127,127,127,0.18)",
-          "border-radius: 12px",
-        ].join("; ") + ";";
-        const widthPct = [88, 72, 60, 80][i];
-        row.innerHTML = `
-          <span class="xb-skel" style="flex: 1; min-width: 0; height: 14px; width: ${widthPct}%;"></span>
-          <span class="xb-skel" style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;"></span>
-        `;
-        // Stagger the shimmer so the rows feel alive, not robotic.
-        const delay = i * 0.12;
-        row.firstElementChild.style.animationDelay = `${delay}s`;
-        row.lastElementChild.style.animationDelay = `${delay}s`;
-        panel.appendChild(row);
-      }
+      // Bouncing-logo loader while we scrape the convo and ask the model.
+      panel.innerHTML = `<div class="xb-logo-loader" aria-label="Loading suggestions"></div>`;
 
       // Give X time to render the new chat's messages before scraping —
       // otherwise we'd see Array(0) and lock in the static fallback.
