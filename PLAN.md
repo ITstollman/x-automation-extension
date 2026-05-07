@@ -295,6 +295,18 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 
 ## 7. Phased Roadmap
 
+### Status snapshot (2026-05-07)
+
+| Phase | Status |
+|-------|--------|
+| Phase 0 — Foundation | ✅ shipped |
+| Phase 1 — DM Outreach MVP | ✅ shipped |
+| Phase 2 — DM v1.0 (sequences, reply detection, health score) | ✅ shipped |
+| Phase 3 — Auto Engage (search loop + like/retweet/reply) | ✅ shipped |
+| Phase 4 — Automated Posts MVP (scheduling + AI generation) | ✅ shipped |
+| Phase 4 v2 — News ingestion, viral pattern miner, perf feedback | 🟡 backlog |
+| Phase 5 — Polish & Scale (browser profiles, billing, advanced safety) | 🟡 backlog |
+
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xboost-backend`, `xboost-dashboard`
 - Backend scaffold: Express + Firestore + auth (clone Reddit pattern)
@@ -335,14 +347,33 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 - Scheduling engine with performance feedback
 - Post analytics scraper
 
-### Phase 5 — Polish & Scale (ongoing)
-- Per-account browser profile manager
-- Advanced safety (CAPTCHA detector, suspension recovery)
-- Viral pattern miner
-- Team accounts / sub-users
-- Pricing/billing (Stripe)
+### Phase 4 v2 — Posts intelligence (backlog)
+- News/RSS ingestion worker (cron-driven, Firestore-backed)
+- Market-event relevance scoring → "should we post about this?" check
+  before generating content
+- Viral pattern miner — track top tweets in user's niche, extract
+  hook/payoff structures, feed back into post generation as scaffolds
+- Performance feedback loop — extension scrapes engagement (likes,
+  reposts, impressions) 24h after post; backend updates per-template
+  and per-hour-of-day weights for future scheduling
 
-**Total**: ~3 months to full vision MVP. DM Outreach alone is shippable in ~5 weeks.
+### Phase 5 — Polish & Scale (ongoing)
+- Per-account browser profile manager (we explicitly punted this:
+  users manage Chrome profiles manually for now)
+- Advanced safety: CAPTCHA detector that pauses the account, automatic
+  account-cooldown on detected suspension warning, daily-cap auto-tuning
+  based on health score trajectory
+- Team accounts / sub-users (org-level Firebase Auth, role gates)
+- Pricing/billing (Stripe Checkout + portal, plan-based action caps)
+- Code splitting (dashboard bundle is ~650KB gzipped; route-level lazy
+  imports would cut initial load)
+- Migration: today the GEMINI_API_KEY hardcoded in extension as the
+  shared fallback should move to a dashboard-side "AI providers" page
+  that stores keys server-side
+
+**Total at scaffold time**: ~3 months to full vision MVP. As of this
+commit, all four phase MVPs are shipped — what remains is intelligence,
+polish, and scale.
 
 ## 8. What's Already Done vs What's Needed
 
