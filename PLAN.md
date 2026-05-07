@@ -310,6 +310,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 7 — DM Co-pilot (Draft mode v1; full-auto poller v1.1) | ✅ shipped (v1) |
 | Phase 8 — Analytics & Reporting | ✅ shipped (v1) |
 | Phase 9 — Follow/Unfollow campaigns | ✅ shipped (v1) |
+| Phase 10 — Multi-account hardening | ✅ shipped (v1) |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -604,6 +605,70 @@ Recommended order (each block can ship independently):
 Total: ~5 weeks to full xreacher parity, with our existing
 differentiators (Brand depth, Auto Engage, Posts, in-X side panel)
 intact.
+
+### Phase 10 — Multi-account hardening (~3 days)
+
+**Problem.** The data model is correctly per-account end-to-end
+(actions, history, conversations, dailyCaps, scrapesToday,
+healthScore, workingHours, status, cooldown, copilotConfigs,
+followStatus on prospects). But three product surfaces still treat
+the user as if they have one X account:
+
+1. **Brand profile is global** — `brandProfiles/{userId}` is a single
+   doc that auto-engage, auto-posts, and the DM co-pilot all consume.
+   A user running `@business` and `@personal` gets the same voice /
+   tagline / CTA / hard rules across both. Loud mismatch.
+2. **Analytics overview has no per-account pivot** — totals are
+   blended; the top-campaigns leaderboard doesn't even show which
+   account each campaign ran on. You can drill into one account via
+   `/accounts/:id` but can't compare two side by side.
+3. **Campaign detail blends multi-account metrics** — for a campaign
+   targeting 3 accounts, the stat cards + activity chart aggregate
+   everything; no per-account split inside the campaign view.
+
+**10A — Brand override per account (biggest, ~1.5 days)**
+
+- `xAccounts/{id}.brandOverride` — sparse object holding only the
+  fields the user explicitly set per-account. Empty fields fall
+  through to the global `brandProfiles/{userId}` doc.
+- New `lib/brand-merge.js` with `mergeBrand(global, override)` that
+  fills in from global for any missing/empty field on the override.
+- `lib/auto-engage`, `lib/auto-posts`, `lib/dm-copilot` all replace
+  their direct `brandProfiles/{userId}` read with
+  `loadBrandFor({ userId, accountId })` which returns the merged
+  brand. The drafter prompt sees one brand object — no caller knows
+  whether it came from global, override, or both.
+- New routes: `GET /api/brand/account/:accountId`,
+  `PUT /api/brand/account/:accountId`,
+  `DELETE /api/brand/account/:accountId`.
+- Panel: new "Brand override" section on `AccountDetailPage`. Same
+  fields as `BrandPage`, each placeholder shows the global value.
+  "Reset override" button clears the per-account patch.
+
+**10B — Analytics per-account pivots (~1 day)**
+
+- `lib/analytics.overview()` accepts `accountId`. When set, filters
+  `history` rows + `topCampaigns` aggregator by that account. Cache
+  key includes accountId.
+- `lib/analytics.forCampaign()` returns a `byAccount` array when the
+  campaign targets 2+ accounts: `[{ accountId, handle, sent, replies,
+  errors, replyRate }, ...]`.
+- Panel `OverviewPage` gets an account `Select` next to the range
+  toggle. Top-campaigns leaderboard shows the account chip(s) on
+  each row.
+- Panel `CampaignDetailPage` adds a "Per-account breakdown" card when
+  `byAccount.length > 1`.
+
+**10C — Cleanup (~half day)**
+
+- Document the soft-delete cascade story (today: archived accounts
+  leave their actions / copilotConfigs / scrapesToday docs in place;
+  worker filters by status so they never dispatch — fine, but worth
+  a runbook entry).
+- Note remaining "global" surfaces that are correctly global:
+  templates (shared library, accounts pick from), lists (same), brand
+  base (override layered on top). These are not gaps — different
+  semantics from the three above.
 
 ## 8. What's Already Done vs What's Needed
 
