@@ -311,6 +311,8 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 8 — Analytics & Reporting | ✅ shipped (v1) |
 | Phase 9 — Follow/Unfollow campaigns | ✅ shipped (v1) |
 | Phase 10 — Multi-account hardening | ✅ shipped (v1) |
+| Phase 11 — Inbox v1.1 (Mentions + Replies) | ✅ shipped (v1) |
+| Phase 12 — Stripe billing + plan caps | ✅ shipped (v1) |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
