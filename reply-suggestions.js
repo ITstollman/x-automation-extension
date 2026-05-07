@@ -19,6 +19,35 @@
   }
   window.__xboostSuggestionsMounted = true;
 
+  // One-shot stylesheet for skeleton shimmer. Lives in the host page so
+  // chip-bar children (which render directly in the X DOM, not in our
+  // shadow root) can use the .xb-skel class.
+  if (!document.getElementById('xb-skel-styles')) {
+    const styleTag = document.createElement('style');
+    styleTag.id = 'xb-skel-styles';
+    styleTag.textContent = `
+      .xb-skel {
+        background: linear-gradient(
+          90deg,
+          rgba(127,127,127,0.10) 0%,
+          rgba(127,127,127,0.24) 50%,
+          rgba(127,127,127,0.10) 100%
+        );
+        background-size: 200% 100%;
+        animation: xbSkelShimmer 1.4s ease-in-out infinite;
+        border-radius: 6px;
+      }
+      @keyframes xbSkelShimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .xb-skel { animation: none; }
+      }
+    `;
+    document.head.appendChild(styleTag);
+  }
+
   // DM composer
   const TEXTAREA_SEL = '[data-testid="dm-composer-textarea"]';
   const CONTAINER_SEL = '[data-testid="dm-composer-container"]';
@@ -944,11 +973,33 @@ Generate 4 short reply tweets I might post.
       const populateUrl = location.pathname;
       bar.dataset.convoUrl = populateUrl;
 
+      // Skeleton loading state — 4 rows mirroring the option-row layout
+      // (text bubble + circular send button) so the swap to real suggestions
+      // is silent (no layout shift, no "Generating…" italic).
       panel.innerHTML = "";
-      const loading = document.createElement("div");
-      loading.style.cssText = "padding: 12px 4px; font-size: 13px; color: rgba(127,127,127,0.7); font-style: italic;";
-      loading.textContent = "Generating suggestions…";
-      panel.appendChild(loading);
+      for (let i = 0; i < 4; i++) {
+        const row = document.createElement("div");
+        // Match xb-option visual: same row chrome, but with skeleton fills.
+        row.style.cssText = [
+          "display: flex",
+          "align-items: center",
+          "gap: 8px",
+          "padding: 8px 10px 8px 14px",
+          "background: rgba(127,127,127,0.10)",
+          "border: 1px solid rgba(127,127,127,0.18)",
+          "border-radius: 12px",
+        ].join("; ") + ";";
+        const widthPct = [88, 72, 60, 80][i];
+        row.innerHTML = `
+          <span class="xb-skel" style="flex: 1; min-width: 0; height: 14px; width: ${widthPct}%;"></span>
+          <span class="xb-skel" style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;"></span>
+        `;
+        // Stagger the shimmer so the rows feel alive, not robotic.
+        const delay = i * 0.12;
+        row.firstElementChild.style.animationDelay = `${delay}s`;
+        row.lastElementChild.style.animationDelay = `${delay}s`;
+        panel.appendChild(row);
+      }
 
       // Give X time to render the new chat's messages before scraping —
       // otherwise we'd see Array(0) and lock in the static fallback.

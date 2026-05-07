@@ -148,10 +148,31 @@
     return li;
   }
 
+  function renderHistorySkeletons(list, count = 5) {
+    list.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      const li = document.createElement("li");
+      li.className = "history-item is-skel";
+      // Mirror the real history-item layout (icon circle + 2-line body) so
+      // the swap to data is visually quiet.
+      li.innerHTML = `
+        <span class="history-icon"><span class="skeleton skel-circle" style="width:14px;height:14px;"></span></span>
+        <div class="history-body">
+          <div class="skeleton skel-line skel-w-70" style="margin-bottom:6px;"></div>
+          <div class="skeleton skel-line-sm skel-w-50" style="margin-bottom:6px;"></div>
+          <div class="skeleton skel-line-sm skel-w-30"></div>
+        </div>
+      `;
+      list.appendChild(li);
+    }
+  }
+
   async function renderHistory(root) {
     const list = $(root, "#history-list");
     const empty = $(root, "#history-empty");
     if (!list) return;
+    empty?.classList.add("hidden");
+    renderHistorySkeletons(list);
     const history = await readHistory();
     list.innerHTML = "";
     if (!history.length) {
@@ -766,6 +787,22 @@
     const hiAllBtn = $(root, "#convos-hi-all-btn");
     let cached = [];
 
+    function renderConvoSkeletons(count = 5) {
+      const list = $(root, "#convos-list");
+      if (!list) return;
+      list.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        const li = document.createElement("li");
+        li.className = "convo-item is-skel";
+        li.innerHTML = `
+          <span class="convo-num"><span class="skeleton skel-line-sm" style="width:12px;"></span></span>
+          <span class="convo-name"><span class="skeleton skel-line skel-w-70"></span></span>
+          <span class="skeleton" style="flex-shrink:0;width:54px;height:24px;border-radius:999px;"></span>
+        `;
+        list.appendChild(li);
+      }
+    }
+
     async function refresh() {
       if (!isOnMessages()) {
         setStatus(root, "Open Messages first to load conversations.");
@@ -773,6 +810,10 @@
         hiAllBtn?.classList.add("hidden");
         return;
       }
+      // Show skeletons while we wait for X to settle and the scrape to land.
+      renderConvoSkeletons(5);
+      setStatus(root, "Loading conversations…");
+      hiAllBtn?.classList.add("hidden");
       // Give X a beat to render its list if we just navigated.
       const found = scrapeConversations(5);
       if (found.length === 0) {
