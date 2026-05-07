@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "XBoost",
+  "name": "Xlift",
   "version": "0.1.0",
-  "description": "Grow your brand on X. XBoost manages your accounts, suggests topics, and helps you launch authentic replies.",
+  "description": "Grow your brand on X. Xlift manages your accounts, suggests topics, and helps you launch authentic replies.",
   "permissions": [
     "activeTab",
     "alarms",
@@ -29,11 +29,11 @@
         "default": "Ctrl+Shift+X",
         "mac": "Command+Shift+X"
       },
-      "description": "Reload XBoost and refresh open X tabs"
+      "description": "Reload Xlift and refresh open X tabs"
     }
   },
   "action": {
-    "default_title": "XBoost",
+    "default_title": "Xlift",
     "default_icon": {
       "16": "icons/logo.png",
       "48": "icons/logo.png",

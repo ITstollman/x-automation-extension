@@ -1,21 +1,21 @@
 /**
- * XBoost floating widget — content script.
+ * Xlift floating widget — content script.
  * The FAB lives on x.com / twitter.com pages; the panel hosts the same app
  * the (future) side panel would. We fetch sidepanel.html / sidepanel.css,
- * inject them into a Shadow DOM, then call window.mountXBoost(shadow).
+ * inject them into a Shadow DOM, then call window.mountXlift(shadow).
  * One source of truth — no iframe, no duplication.
  */
 (function () {
   "use strict";
 
-  if (window.__xboostWidgetMounted) return;
-  window.__xboostWidgetMounted = true;
+  if (window.__xliftWidgetMounted) return;
+  window.__xliftWidgetMounted = true;
 
   const LOGO_URL = chrome.runtime.getURL("icons/logo.png");
   const APP_HTML_URL = chrome.runtime.getURL("sidepanel.html");
   const APP_CSS_URL = chrome.runtime.getURL("sidepanel.css");
 
-  const POS_KEY = "xboost_widget_pos_v1";
+  const POS_KEY = "xlift_widget_pos_v1";
   const FAB_SIZE = 56;
   const EDGE_MARGIN = 12;
   const DRAG_THRESHOLD = 5;
@@ -159,7 +159,7 @@
 
   async function mount() {
     const host = document.createElement("div");
-    host.id = "xboost-widget-host";
+    host.id = "xlift-widget-host";
     host.style.cssText = [
       "all: initial",
       "position: fixed",
@@ -183,10 +183,10 @@
     widget.className = "xb-widget";
     widget.id = "xb-widget";
     widget.innerHTML = `
-      <div class="xb-panel" role="dialog" aria-label="XBoost">
+      <div class="xb-panel" role="dialog" aria-label="Xlift">
         <div class="xb-app-host" id="xb-app-host"></div>
       </div>
-      <button class="xb-fab" id="xb-fab" aria-label="Toggle XBoost">
+      <button class="xb-fab" id="xb-fab" aria-label="Toggle Xlift">
         <span class="xb-fab-pulse"></span>
         <img src="${LOGO_URL}" alt="" />
       </button>
@@ -319,7 +319,7 @@
     });
 
     // Load the panel HTML + CSS into our shadow DOM. sidepanel.js is loaded
-    // as a sibling content script via manifest, so window.mountXBoost is
+    // as a sibling content script via manifest, so window.mountXlift is
     // already defined when we get here.
     try {
       let [cssText, htmlText] = await Promise.all([
@@ -346,13 +346,13 @@
         appHost.appendChild(node.cloneNode(true));
       });
 
-      if (typeof window.mountXBoost === "function") {
-        window.mountXBoost(shadow);
+      if (typeof window.mountXlift === "function") {
+        window.mountXlift(shadow);
       } else {
-        console.error("[XBoost] mountXBoost not exposed (sidepanel.js failed to load?)");
+        console.error("[Xlift] mountXlift not exposed (sidepanel.js failed to load?)");
       }
     } catch (err) {
-      console.error("[XBoost] Failed to mount widget app:", err);
+      console.error("[Xlift] Failed to mount widget app:", err);
     }
   }
 

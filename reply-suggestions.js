@@ -1,5 +1,5 @@
 /**
- * XBoost reply suggestions — inject a chip bar above X's DM composer.
+ * Xlift reply suggestions — inject a chip bar above X's DM composer.
  * Click a chip to populate the textarea (user can still edit before sending).
  *
  * AI swap-point: getSuggestions(context) is the only thing to replace when
@@ -9,15 +9,15 @@
 (function () {
   "use strict";
 
-  const LOG = (...args) => console.log("[XBoost suggestions]", ...args);
+  const LOG = (...args) => console.log("[Xlift suggestions]", ...args);
 
   LOG("script loaded at", location.pathname);
 
-  if (window.__xboostSuggestionsMounted) {
+  if (window.__xliftSuggestionsMounted) {
     LOG("already mounted, bailing");
     return;
   }
-  window.__xboostSuggestionsMounted = true;
+  window.__xliftSuggestionsMounted = true;
 
   // One-shot stylesheet for skeleton shimmer. Lives in the host page so
   // chip-bar children (which render directly in the X DOM, not in our
@@ -67,8 +67,8 @@
   // before public release.
   const GEMINI_API_KEY = "AIzaSyAjSsdmm3f8kiFmXWMHWMBBXe8cdBTcONo";
   const GEMINI_MODEL = "gemini-2.5-flash";
-  const BRAND_KEY = "xboost_brand_v1";
-  const SETTINGS_KEY = "xboost_settings_v1";
+  const BRAND_KEY = "xlift_brand_v1";
+  const SETTINGS_KEY = "xlift_settings_v1";
 
   async function getGeminiUrl() {
     let userKey = "";
@@ -111,7 +111,7 @@
     }
     return JSON.parse(text);
   }
-  window.xboostCallGemini = callGemini;
+  window.xliftCallGemini = callGemini;
 
   // ─── Brand profile helpers ───────────────────────────────────────────────
 
@@ -480,7 +480,7 @@ Generate 4 short reply tweets I might post.
         LOG("Gemini DM suggestions:", suggestions);
         return suggestions;
       } catch (err) {
-        console.error("[XBoost suggestions] Gemini DM failed, using fallback:", err);
+        console.error("[Xlift suggestions] Gemini DM failed, using fallback:", err);
         return staticFallback(messages);
       }
     }
@@ -498,7 +498,7 @@ Generate 4 short reply tweets I might post.
         LOG("Gemini tweet suggestions:", suggestions);
         return suggestions;
       } catch (err) {
-        console.error("[XBoost suggestions] Gemini tweet reply failed, using fallback:", err);
+        console.error("[Xlift suggestions] Gemini tweet reply failed, using fallback:", err);
         return ["Great point", "Curious to hear more", "Thanks for sharing", "Interesting take"];
       }
     }
@@ -622,7 +622,7 @@ Generate 4 short reply tweets I might post.
   }
 
   // Send the active composer's content through X's UI.
-  // Exposed as window.xboostSendDirectly so sidepanel.js can reuse the same
+  // Exposed as window.xliftSendDirectly so sidepanel.js can reuse the same
   // working send pipeline instead of maintaining its own.
   async function sendDirectly(text) {
     LOG("sendDirectly start, text:", JSON.stringify(text));
@@ -745,7 +745,7 @@ Generate 4 short reply tweets I might post.
     LOG("all send paths failed");
     return false;
   }
-  window.xboostSendDirectly = sendDirectly;
+  window.xliftSendDirectly = sendDirectly;
 
   function makeOptionRow(initialText, onSend) {
     const row = document.createElement("div");
@@ -845,7 +845,7 @@ Generate 4 short reply tweets I might post.
         sendBtn.style.color = "rgb(0,186,124)";
         row.style.opacity = "0.55";
       } catch (err) {
-        console.error("[XBoost] send failed:", err);
+        console.error("[Xlift] send failed:", err);
         sendBtn.disabled = false;
         input.disabled = false;
         // Flash red briefly to signal the failure.
@@ -1019,11 +1019,11 @@ Generate 4 short reply tweets I might post.
       for (const text of suggestions) {
         panel.appendChild(makeOptionRow(text, async (finalText) => {
           const ok = await sendDirectly(finalText);
-          if (ok && typeof window.xboostLogAction === "function") {
+          if (ok && typeof window.xliftLogAction === "function") {
             const target = adapter.kind === "tweet"
               ? `reply to ${getTweetReplyContext(adapter.input)?.author || "tweet"}`
               : (getCounterpartName() || "current chat");
-            window.xboostLogAction({
+            window.xliftLogAction({
               type: "sent",
               target,
               text: finalText,

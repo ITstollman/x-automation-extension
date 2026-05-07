@@ -1,5 +1,5 @@
 /**
- * XBoost background service worker.
+ * Xlift background service worker.
  *
  * Responsibilities:
  *   1. Toolbar icon → toggle the floating widget on the active X tab.
@@ -14,14 +14,14 @@
 const X_HOST_PATTERN = /^https:\/\/(www\.)?(x|twitter)\.com\//;
 const POLL_INTERVAL_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 60_000;
-const STATE_KEY = "xboost_backend_v1";
+const STATE_KEY = "xlift_backend_v1";
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id || !tab.url || !X_HOST_PATTERN.test(tab.url)) return;
   try {
     await chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_WIDGET" });
   } catch (err) {
-    console.warn("[XBoost bg] Could not toggle widget:", err.message);
+    console.warn("[Xlift bg] Could not toggle widget:", err.message);
   }
 });
 
@@ -77,7 +77,7 @@ async function pollOnce() {
     if (!result || !result.action) return;
 
     const action = result.action;
-    console.log("[XBoost bg] dispatching action", action.id, action.type);
+    console.log("[Xlift bg] dispatching action", action.id, action.type);
 
     const tab = await getActiveXTab();
     if (!tab) {
@@ -99,7 +99,7 @@ async function pollOnce() {
 
     await reportAction(action.id, response || { ok: false, error: "No response from content script" });
   } catch (err) {
-    console.error("[XBoost bg] poll error:", err.message);
+    console.error("[Xlift bg] poll error:", err.message);
   }
 }
 
@@ -110,7 +110,7 @@ async function reportAction(id, body) {
       body: JSON.stringify(body),
     });
   } catch (err) {
-    console.error("[XBoost bg] report failed:", err.message);
+    console.error("[Xlift bg] report failed:", err.message);
   }
 }
 
@@ -127,15 +127,15 @@ async function heartbeatOnce() {
 // MV3 service workers can't use long-running setInterval reliably. Use
 // chrome.alarms for the poll/heartbeat cadence.
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create("xboost-poll", { periodInMinutes: POLL_INTERVAL_MS / 60_000 });
-  chrome.alarms.create("xboost-heartbeat", { periodInMinutes: HEARTBEAT_INTERVAL_MS / 60_000 });
+  chrome.alarms.create("xlift-poll", { periodInMinutes: POLL_INTERVAL_MS / 60_000 });
+  chrome.alarms.create("xlift-heartbeat", { periodInMinutes: HEARTBEAT_INTERVAL_MS / 60_000 });
 });
 chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create("xboost-poll", { periodInMinutes: POLL_INTERVAL_MS / 60_000 });
-  chrome.alarms.create("xboost-heartbeat", { periodInMinutes: HEARTBEAT_INTERVAL_MS / 60_000 });
+  chrome.alarms.create("xlift-poll", { periodInMinutes: POLL_INTERVAL_MS / 60_000 });
+  chrome.alarms.create("xlift-heartbeat", { periodInMinutes: HEARTBEAT_INTERVAL_MS / 60_000 });
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === "xboost-poll") pollOnce();
-  else if (alarm.name === "xboost-heartbeat") heartbeatOnce();
+  if (alarm.name === "xlift-poll") pollOnce();
+  else if (alarm.name === "xlift-heartbeat") heartbeatOnce();
 });

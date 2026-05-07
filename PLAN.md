@@ -1,10 +1,10 @@
-# XBoost Master Plan
+# Xlift Master Plan
 
 > An automated marketing stack for X (Twitter): Posts, DM Outreach, and Auto Engage — orchestrated by an AI Boss, governed by safety rails, executed through the user's real authenticated session.
 
 ## 1. Vision
 
-XBoost turns a manual X presence into an always-on growth engine. Three campaign types — **DM Outreach**, **Auto Engage**, **Automated Posts** — each governed by per-account safety budgets, all driven by a deterministic **Scheduler + Action Queue**. The user defines strategy (brand profile, audience, targets, voice, schedule). XBoost executes day-to-day on the user's behalf. AI is invoked as a tool *at the moment* an action needs content — never as an orchestrator.
+Xlift turns a manual X presence into an always-on growth engine. Three campaign types — **DM Outreach**, **Auto Engage**, **Automated Posts** — each governed by per-account safety budgets, all driven by a deterministic **Scheduler + Action Queue**. The user defines strategy (brand profile, audience, targets, voice, schedule). Xlift executes day-to-day on the user's behalf. AI is invoked as a tool *at the moment* an action needs content — never as an orchestrator.
 
 ### Decisions locked in (2026-05-07)
 1. **Multi-tenant from day 1** — proper user isolation, billing-ready
@@ -308,7 +308,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 5 — Polish & Scale (browser profiles, billing, advanced safety) | 🟡 backlog |
 
 ### Phase 0 — Foundation (~1.5 weeks)
-- New repos: `xboost-backend`, `xboost-dashboard`
+- New repos: `xlift-backend`, `xlift-dashboard`
 - Backend scaffold: Express + Firestore + auth (clone Reddit pattern)
 - Dashboard scaffold: React + Mantine
 - Extension ↔ backend: auth flow, account connection, action poll/report protocol

@@ -1,17 +1,17 @@
 /**
- * XBoost panel app — login screen, drawer nav, page swap.
- * Exposed as window.mountXBoost(rootOrShadow). The content script hands us
+ * Xlift panel app — login screen, drawer nav, page swap.
+ * Exposed as window.mountXlift(rootOrShadow). The content script hands us
  * the shadow root; we wire up everything inside that scope so nothing leaks
  * to the host page.
  */
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "xboost_session_v1";
-  const HISTORY_KEY = "xboost_history_v1";
+  const STORAGE_KEY = "xlift_session_v1";
+  const HISTORY_KEY = "xlift_history_v1";
   const HISTORY_MAX = 200;
-  const BRAND_KEY = "xboost_brand_v1";
-  const SETTINGS_KEY = "xboost_settings_v1";
+  const BRAND_KEY = "xlift_brand_v1";
+  const SETTINGS_KEY = "xlift_settings_v1";
 
   const DEFAULT_BRAND = {
     link: "",
@@ -66,16 +66,16 @@
       if (history.length > HISTORY_MAX) history.length = HISTORY_MAX;
       await chrome.storage.local.set({ [HISTORY_KEY]: history });
     } catch (err) {
-      console.error("[XBoost] logAction failed:", err);
+      console.error("[Xlift] logAction failed:", err);
     }
     // Best-effort mirror to backend so the dashboard's History page
     // reflects manual actions too (Hi-button sends, suggestion sends).
     // Non-blocking; ignores failures (no backend connected = silent skip).
-    if (window.xboostBackend) {
+    if (window.xliftBackend) {
       try {
-        const cfg = await window.xboostBackend.getConfig();
+        const cfg = await window.xliftBackend.getConfig();
         if (cfg.key && cfg.accountId) {
-          await window.xboostBackend.recordHistory?.({
+          await window.xliftBackend.recordHistory?.({
             accountId: cfg.accountId,
             ...action,
           });
@@ -90,7 +90,7 @@
 
   // Expose so reply-suggestions.js (sibling content script in the same
   // isolated world) can record actions too.
-  window.xboostLogAction = logAction;
+  window.xliftLogAction = logAction;
 
   function relativeTime(ts) {
     const diff = Date.now() - ts;
@@ -322,7 +322,7 @@
         if (!fn) return;
         btn.setAttribute("data-busy", "true");
         try { await fn(); }
-        catch (err) { console.error(`[XBoost] action ${name} failed:`, err); }
+        catch (err) { console.error(`[Xlift] action ${name} failed:`, err); }
         finally { btn.removeAttribute("data-busy"); }
       });
     });
@@ -454,7 +454,7 @@
       .slice(0, 10)
       .map((e) => ({ tag: e.tagName, testid: e.getAttribute("data-testid"), label: e.getAttribute("aria-label") }));
 
-    console.groupCollapsed(`[XBoost] row #${idx + 1} structure dump`);
+    console.groupCollapsed(`[Xlift] row #${idx + 1} structure dump`);
     console.log("testid:", row.getAttribute("data-testid"));
     console.log("href:", link?.getAttribute("href"));
     console.log("link aria-label:", link?.getAttribute("aria-label"));
@@ -528,8 +528,8 @@
     return out;
   }
 
-  const LOG = (...args) => console.log("[XBoost]", ...args);
-  const WARN = (...args) => console.warn("[XBoost]", ...args);
+  const LOG = (...args) => console.log("[Xlift]", ...args);
+  const WARN = (...args) => console.warn("[Xlift]", ...args);
 
   // Log every data-testid that *might* be the DM composer or send button so
   // we can see what X actually renders on this URL shape.
@@ -717,11 +717,11 @@
     await new Promise((r) => setTimeout(r, 400));
     LOG("post-nav location:", location.pathname);
     // Use the chip-suggestion send pipeline (the one that actually works).
-    // Exposed by reply-suggestions.js as window.xboostSendDirectly.
-    if (typeof window.xboostSendDirectly !== "function") {
+    // Exposed by reply-suggestions.js as window.xliftSendDirectly.
+    if (typeof window.xliftSendDirectly !== "function") {
       throw new Error("Send helper not available — refresh the X tab and try again.");
     }
-    const ok = await window.xboostSendDirectly("hi");
+    const ok = await window.xliftSendDirectly("hi");
     if (!ok) throw new Error("Send didn't go through.");
     logAction({
       type: "sent",
@@ -871,7 +871,7 @@
 
   async function writeBrand(data) {
     try { await chrome.storage.local.set({ [BRAND_KEY]: data }); }
-    catch (err) { console.error("[XBoost] writeBrand failed:", err); throw err; }
+    catch (err) { console.error("[Xlift] writeBrand failed:", err); throw err; }
   }
 
   function brandFieldMap(root) {
@@ -946,7 +946,7 @@
     "sharp", "formal", "curious", "confident", "friendly", "contrarian",
   ];
 
-  // Calls Gemini (via the shared window.xboostCallGemini exposed by
+  // Calls Gemini (via the shared window.xliftCallGemini exposed by
   // reply-suggestions.js) to draft a brand profile from a URL. The model
   // grounds on whatever it knows of the hostname plus the user's
   // domain — if it doesn't recognize the brand, it infers from the name.
@@ -954,7 +954,7 @@
     if (!url || !/^https?:\/\//i.test(url)) {
       throw new Error("Paste a full URL starting with https://");
     }
-    if (typeof window.xboostCallGemini !== "function") {
+    if (typeof window.xliftCallGemini !== "function") {
       throw new Error("AI not available. Open the side panel from an x.com tab so suggestions can load.");
     }
 
@@ -1016,7 +1016,7 @@ Be specific, not generic. Avoid "innovative", "cutting-edge", "revolutionary", "
       ],
     };
 
-    const draft = await window.xboostCallGemini(prompt, schema, {
+    const draft = await window.xliftCallGemini(prompt, schema, {
       temperature: 0.7,
       maxOutputTokens: 1800,
     });
@@ -1240,7 +1240,7 @@ Be specific, not generic. Avoid "innovative", "cutting-edge", "revolutionary", "
     const status = $(root, "#settings-backend-status");
     const connectBtn = $(root, "#settings-backend-connect");
     const disconnectBtn = $(root, "#settings-backend-disconnect");
-    if (!keyInput || !window.xboostBackend) return;
+    if (!keyInput || !window.xliftBackend) return;
 
     function setStatus(text, state) {
       if (!status) return;
@@ -1249,7 +1249,7 @@ Be specific, not generic. Avoid "innovative", "cutting-edge", "revolutionary", "
     }
 
     // Hydrate from current state.
-    window.xboostBackend.getConfig().then((cfg) => {
+    window.xliftBackend.getConfig().then((cfg) => {
       if (urlInput && cfg.apiUrl) urlInput.value = cfg.apiUrl;
       if (cfg.key) {
         keyInput.value = cfg.key;
@@ -1270,7 +1270,7 @@ Be specific, not generic. Avoid "innovative", "cutting-edge", "revolutionary", "
       setStatus("Verifying…", "saving");
       connectBtn.disabled = true;
       try {
-        const data = await window.xboostBackend.connect({ key, apiUrl: apiUrl || undefined });
+        const data = await window.xliftBackend.connect({ key, apiUrl: apiUrl || undefined });
         setStatus(`Connected — user ${data.userId}`, "ok");
       } catch (err) {
         setStatus(err.message || "Could not connect", "err");
@@ -1280,15 +1280,15 @@ Be specific, not generic. Avoid "innovative", "cutting-edge", "revolutionary", "
     });
 
     disconnectBtn?.addEventListener("click", async () => {
-      await window.xboostBackend.disconnect();
+      await window.xliftBackend.disconnect();
       keyInput.value = "";
       setStatus("Disconnected.", "idle");
     });
   }
 
-  async function mountXBoost(root) {
+  async function mountXlift(root) {
     if (!root) {
-      console.error("[XBoost] mountXBoost called without a root");
+      console.error("[Xlift] mountXlift called without a root");
       return;
     }
     wireLogin(root);
@@ -1306,5 +1306,5 @@ Be specific, not generic. Avoid "innovative", "cutting-edge", "revolutionary", "
     else showLogin(root);
   }
 
-  window.mountXBoost = mountXBoost;
+  window.mountXlift = mountXlift;
 })();
