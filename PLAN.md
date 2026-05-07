@@ -306,10 +306,10 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 4 — Automated Posts MVP (scheduling + AI generation) | ✅ shipped |
 | Phase 4 v2 — News ingestion, viral pattern miner, perf feedback | 🟡 backlog |
 | Phase 5 — Polish & Scale (browser profiles, billing, advanced safety) | 🟡 backlog |
-| Phase 6 — Lead Scraper (bio / followers-of / engagers) | 🟡 backlog |
-| Phase 7 — DM Co-pilot (autonomous inbound responder) | 🟡 backlog |
-| Phase 8 — Analytics & Reporting | 🟡 backlog |
-| Phase 9 — Follow/Unfollow campaigns | 🟡 backlog |
+| Phase 6 — Lead Scraper (bio / followers-of / engagers) | ✅ shipped (v1) |
+| Phase 7 — DM Co-pilot (Draft mode v1; full-auto poller v1.1) | ✅ shipped (v1) |
+| Phase 8 — Analytics & Reporting | ✅ shipped (v1) |
+| Phase 9 — Follow/Unfollow campaigns | ✅ shipped (v1) |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
