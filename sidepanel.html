@@ -88,6 +88,10 @@
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           <span>Accounts</span>
         </button>
+        <button class="nav-item" data-page="history">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>History</span>
+        </button>
         <button class="nav-item" data-page="settings">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Settings</span>
@@ -146,8 +150,175 @@
 
       <section class="page hidden" data-page="brand">
         <h2 class="page-title">Brand profile</h2>
-        <p class="page-sub">Voice, tone, and what you're promoting.</p>
-        <p class="page-empty">Brand profile coming soon.</p>
+        <p class="page-sub">Teach XBoost who you are. The more it knows, the better it sounds like you.</p>
+
+        <div id="brand-save-status" class="brand-save-status hidden" aria-live="polite"></div>
+
+        <!-- Quick start: paste link, generate -->
+        <div class="brand-card brand-quickstart">
+          <h3 class="brand-card-title">Start from your link</h3>
+          <p class="brand-card-sub">Paste your site or X profile. We'll read it and fill the basics — you edit from there.</p>
+          <div class="brand-link-row">
+            <input id="brand-link" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://your-brand.com" class="brand-input" />
+            <button id="brand-generate-btn" class="primary-btn brand-generate-btn" type="button">
+              <span class="brand-generate-label">Generate</span>
+              <span class="brand-spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+          <p id="brand-generate-status" class="brand-generate-status"></p>
+        </div>
+
+        <!-- Identity -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Who you are</h3>
+          <label class="brand-field">
+            <span class="brand-field-label">One-line pitch</span>
+            <input id="brand-tagline" class="brand-input" placeholder="The fastest way to grow on X — without sounding like a bot." spellcheck="false" />
+          </label>
+          <label class="brand-field">
+            <span class="brand-field-label">Description</span>
+            <span class="brand-field-hint">Two or three sentences a stranger should walk away knowing.</span>
+            <textarea id="brand-description" class="brand-textarea" rows="4" placeholder="What you do, who it's for, and why it exists."></textarea>
+          </label>
+        </div>
+
+        <!-- Value proposition -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Value proposition</h3>
+          <p class="brand-card-sub">The wedge no one else has. The reason they pick you.</p>
+          <textarea id="brand-value" class="brand-textarea" rows="3" placeholder="The unique outcome you deliver, in plain language."></textarea>
+        </div>
+
+        <!-- Audience -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Who you're talking to</h3>
+          <p class="brand-card-sub">Indie devs? Solo founders? Marketing leads at scale-ups? Be specific — XBoost picks better conversations when you are.</p>
+          <textarea id="brand-audience" class="brand-textarea" rows="3" placeholder="The people whose problem you solve."></textarea>
+        </div>
+
+        <!-- Voice & tone -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Voice & tone</h3>
+          <p class="brand-card-sub">Pick the words that fit. Mix and match.</p>
+          <div id="brand-tones" class="brand-chips" data-name="tones">
+            <button type="button" class="brand-chip" data-value="warm">Warm</button>
+            <button type="button" class="brand-chip" data-value="witty">Witty</button>
+            <button type="button" class="brand-chip" data-value="professional">Professional</button>
+            <button type="button" class="brand-chip" data-value="bold">Bold</button>
+            <button type="button" class="brand-chip" data-value="playful">Playful</button>
+            <button type="button" class="brand-chip" data-value="direct">Direct</button>
+            <button type="button" class="brand-chip" data-value="sharp">Sharp</button>
+            <button type="button" class="brand-chip" data-value="formal">Formal</button>
+            <button type="button" class="brand-chip" data-value="curious">Curious</button>
+            <button type="button" class="brand-chip" data-value="confident">Confident</button>
+            <button type="button" class="brand-chip" data-value="friendly">Friendly</button>
+            <button type="button" class="brand-chip" data-value="contrarian">Contrarian</button>
+          </div>
+          <label class="brand-field">
+            <span class="brand-field-label">Voice notes</span>
+            <span class="brand-field-hint">Catchphrases you use, words you'd never say, sentence cadence.</span>
+            <textarea id="brand-voice-notes" class="brand-textarea" rows="3" placeholder='e.g. "Always say ‘ship’ instead of ‘launch’. Never use ‘revolutionary’."'></textarea>
+          </label>
+        </div>
+
+        <!-- Chat guidelines -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Chat guidelines</h3>
+          <p class="brand-card-sub">How XBoost writes replies and DMs.</p>
+
+          <div class="brand-radio-group" data-name="replyLength">
+            <span class="brand-field-label">Reply length</span>
+            <div class="brand-radios">
+              <label><input type="radio" name="replyLength" value="short" /><span>Short</span></label>
+              <label><input type="radio" name="replyLength" value="medium" checked /><span>Medium</span></label>
+              <label><input type="radio" name="replyLength" value="long" /><span>Long</span></label>
+            </div>
+          </div>
+
+          <div class="brand-radio-group" data-name="emojis">
+            <span class="brand-field-label">Emojis</span>
+            <div class="brand-radios">
+              <label><input type="radio" name="emojis" value="never" /><span>Never</span></label>
+              <label><input type="radio" name="emojis" value="sometimes" checked /><span>Sometimes</span></label>
+              <label><input type="radio" name="emojis" value="often" /><span>Often</span></label>
+            </div>
+          </div>
+
+          <div class="brand-radio-group" data-name="hashtags">
+            <span class="brand-field-label">Hashtags</span>
+            <div class="brand-radios">
+              <label><input type="radio" name="hashtags" value="never" checked /><span>Never</span></label>
+              <label><input type="radio" name="hashtags" value="sometimes" /><span>Sometimes</span></label>
+              <label><input type="radio" name="hashtags" value="often" /><span>Often</span></label>
+            </div>
+          </div>
+
+          <div class="brand-radio-group" data-name="pov">
+            <span class="brand-field-label">Voice</span>
+            <div class="brand-radios">
+              <label><input type="radio" name="pov" value="i" checked /><span>"I"</span></label>
+              <label><input type="radio" name="pov" value="we" /><span>"We"</span></label>
+              <label><input type="radio" name="pov" value="brand" /><span>Brand</span></label>
+            </div>
+          </div>
+
+          <div class="brand-radio-group" data-name="questions">
+            <span class="brand-field-label">Ask questions back</span>
+            <div class="brand-radios">
+              <label><input type="radio" name="questions" value="rare" /><span>Rarely</span></label>
+              <label><input type="radio" name="questions" value="balanced" checked /><span>Balanced</span></label>
+              <label><input type="radio" name="questions" value="often" /><span>Often</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Topics include -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Topics to engage</h3>
+          <p class="brand-card-sub">One per line. Conversations XBoost should jump into.</p>
+          <textarea id="brand-topics-include" class="brand-textarea brand-mono" rows="5" placeholder="Indie SaaS&#10;Shopify dev&#10;Bootstrapping&#10;Side projects"></textarea>
+        </div>
+
+        <!-- Topics exclude -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Topics to avoid</h3>
+          <p class="brand-card-sub">Topics that aren't a fit. We'll stay out.</p>
+          <textarea id="brand-topics-exclude" class="brand-textarea brand-mono" rows="4" placeholder="Politics&#10;Crypto trading&#10;Drama / subtweets"></textarea>
+        </div>
+
+        <!-- Hard rules -->
+        <div class="brand-card brand-card-warn">
+          <h3 class="brand-card-title">Hard rules</h3>
+          <p class="brand-card-sub">Things we must <strong>never</strong> say or claim. We respect these absolutely.</p>
+          <textarea id="brand-hard-rules" class="brand-textarea" rows="4" placeholder="Never call us 'AI-powered'.&#10;Never mention competitor names directly.&#10;Never promise specific revenue numbers."></textarea>
+        </div>
+
+        <!-- Examples -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Sample posts</h3>
+          <p class="brand-card-sub">Paste 2–5 of your best replies or posts. XBoost learns your cadence.</p>
+          <textarea id="brand-examples" class="brand-textarea" rows="7" placeholder="Paste examples, separated by blank lines..."></textarea>
+        </div>
+
+        <!-- Promote -->
+        <div class="brand-card">
+          <h3 class="brand-card-title">Promote</h3>
+          <p class="brand-card-sub">Where you want people to go when it fits. We only drop it when relevant.</p>
+          <label class="brand-field">
+            <span class="brand-field-label">Link or offer</span>
+            <input id="brand-cta-link" type="url" class="brand-input" placeholder="https://your-product.com/get-started" inputmode="url" autocomplete="off" spellcheck="false" />
+          </label>
+          <label class="brand-field">
+            <span class="brand-field-label">How to introduce it</span>
+            <span class="brand-field-hint">A natural one-liner that fits a conversation.</span>
+            <textarea id="brand-cta-blurb" class="brand-textarea" rows="2" placeholder='e.g. "Built XBoost for exactly this — flow is at xboost.app if you want a look."'></textarea>
+          </label>
+        </div>
+
+        <div class="brand-actions">
+          <button id="brand-reset-btn" class="ghost-btn" type="button">Reset</button>
+          <button id="brand-save-btn" class="primary-btn brand-save-btn" type="button">Save changes</button>
+        </div>
       </section>
 
       <section class="page hidden" data-page="accounts">
@@ -156,9 +327,56 @@
         <p class="page-empty">No accounts linked yet.</p>
       </section>
 
+      <section class="page hidden" data-page="history">
+        <div class="page-head-row">
+          <div>
+            <h2 class="page-title">History</h2>
+            <p class="page-sub">Actions XBoost performed for you.</p>
+          </div>
+          <button id="history-clear-btn" class="link-btn" type="button">Clear</button>
+        </div>
+        <ul id="history-list" class="history-list" aria-live="polite"></ul>
+        <p id="history-empty" class="page-empty hidden">No actions yet. Send a "hi" or use a suggested reply to get started.</p>
+      </section>
+
       <section class="page hidden" data-page="settings">
         <h2 class="page-title">Settings</h2>
         <p class="page-sub">Preferences and access.</p>
+
+        <div class="brand-card">
+          <h3 class="brand-card-title">AI provider</h3>
+          <p class="brand-card-sub">Use your own Gemini API key. Stored locally on this machine — never sent to our servers. <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get a key →</a></p>
+          <div class="brand-field">
+            <span class="brand-field-label">Gemini API key</span>
+            <div class="settings-secret-row">
+              <input id="settings-gemini-key" type="password" class="brand-input" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+              <button id="settings-gemini-toggle" class="ghost-btn" type="button">Show</button>
+            </div>
+            <span id="settings-gemini-status" class="brand-field-hint settings-status" data-state="idle">Type a key — it saves automatically. Leave empty to use the built-in shared key.</span>
+          </div>
+        </div>
+
+        <div class="brand-card">
+          <h3 class="brand-card-title">Connect to backend</h3>
+          <p class="brand-card-sub">Paste a connection key from the XBoost dashboard to enable campaigns and the action queue. Leave empty for local-only mode.</p>
+          <div class="brand-field">
+            <span class="brand-field-label">Backend URL</span>
+            <input id="settings-backend-url" type="text" class="brand-input" placeholder="http://localhost:3500" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="brand-field">
+            <span class="brand-field-label">Connection key</span>
+            <div class="settings-secret-row">
+              <input id="settings-backend-key" type="password" class="brand-input" placeholder="xb_..." autocomplete="off" spellcheck="false" />
+              <button id="settings-backend-toggle" class="ghost-btn" type="button">Show</button>
+            </div>
+            <span id="settings-backend-status" class="brand-field-hint settings-status" data-state="idle">Not connected.</span>
+          </div>
+          <div class="settings-actions">
+            <button id="settings-backend-connect" class="primary-btn-compact" type="button">Connect</button>
+            <button id="settings-backend-disconnect" class="ghost-btn" type="button">Disconnect</button>
+          </div>
+        </div>
+
         <button id="logout-btn" class="ghost-btn" type="button">Sign out</button>
       </section>
     </main>

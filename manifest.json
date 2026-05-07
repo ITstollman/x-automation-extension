@@ -5,6 +5,7 @@
   "description": "Grow your brand on X. XBoost manages your accounts, suggests topics, and helps you launch authentic replies.",
   "permissions": [
     "activeTab",
+    "alarms",
     "scripting",
     "storage",
     "tabs",
@@ -15,7 +16,9 @@
     "https://www.x.com/*",
     "https://twitter.com/*",
     "https://www.twitter.com/*",
-    "https://*.up.railway.app/*"
+    "https://*.up.railway.app/*",
+    "https://generativelanguage.googleapis.com/*",
+    "http://localhost:3500/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -50,7 +53,7 @@
         "https://twitter.com/*",
         "https://www.twitter.com/*"
       ],
-      "js": ["sidepanel.js", "content-widget.js"],
+      "js": ["lib/api.js", "lib/x-account.js", "lib/executor.js", "sidepanel.js", "content-widget.js", "reply-suggestions.js"],
       "run_at": "document_idle"
     }
   ],
