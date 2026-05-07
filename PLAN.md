@@ -306,6 +306,10 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 4 — Automated Posts MVP (scheduling + AI generation) | ✅ shipped |
 | Phase 4 v2 — News ingestion, viral pattern miner, perf feedback | 🟡 backlog |
 | Phase 5 — Polish & Scale (browser profiles, billing, advanced safety) | 🟡 backlog |
+| Phase 6 — Lead Scraper (bio / followers-of / engagers) | 🟡 backlog |
+| Phase 7 — DM Co-pilot (autonomous inbound responder) | 🟡 backlog |
+| Phase 8 — Analytics & Reporting | 🟡 backlog |
+| Phase 9 — Follow/Unfollow campaigns | 🟡 backlog |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -374,6 +378,232 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 **Total at scaffold time**: ~3 months to full vision MVP. As of this
 commit, all four phase MVPs are shipped — what remains is intelligence,
 polish, and scale.
+
+---
+
+### Phases 6–9: competitive parity & growth
+
+Reference benchmark: **xreacher.com** ($67/mo Pro, $299/mo Scale). Their
+moat is the four features below; ours is the deeper Brand profile, the
+in-X side panel, Auto Engage on tweets (they're DM-only), and
+Automated Posts. Closing the gap takes Xlift from "best-in-class
+campaign engine" to "best-in-class outbound + inbound stack."
+
+### Phase 6 — Lead Scraper (~1 week)
+
+**Goal**: remove the cold-start problem on Lists. Today users have to
+source handles elsewhere; this turns "what should I put in my list"
+into "click Scrape, pick checkboxes, Add to list."
+
+**Three sources, one data shape**
+1. **Bio keyword search** — X GraphQL `SearchTimeline` with
+   `result_filter=user`, cursor-paginated.
+2. **Followers of @handle** — GraphQL `Followers` endpoint.
+3. **Engagers of a tweet** — GraphQL `Favoriters` and `Retweeters`.
+
+All three return X's `User` object (handle, name, bio, follower count,
+avatar, verified, created_at), so the rest of the pipeline is one code
+path: filter → dedupe against `scrapedLeads/{userId}/{handle}` cache →
+display → bulk add to list.
+
+**Backend**
+- `lib/x-scraper.js` — wraps each endpoint, throttled at ~1 req/sec,
+  honors per-account rate-limit budget, retries with exponential backoff
+  on 429/5xx.
+- `routes/scraper.js`:
+  - `POST /api/scraper/search` — `{ accountId, source, query|handle|tweetId, filters, cap }`
+    → returns deduped, filtered users. Cap: default 200, hard max 1000.
+  - `POST /api/scraper/save-to-list` — `{ listId, handles[] }`. Reuses
+    existing `addHandles`.
+- New collection: `scrapedLeads/{userId}/{handle}` — caches profile
+  data, marks "in list X" / "already DM'd by campaign Y" so re-runs are
+  fast and dedupe is cheap.
+
+**Safety** — biggest risk; this is where Xreacher's "100% safe" claim
+is earned:
+- Per-account daily scrape budget (default 1500 user lookups/day),
+  tracked on `xAccounts/{id}.dailyCaps.scrapes`.
+- 429 → set `rate_limited_until = now + 15min`, surface in UI.
+- Synchronous, button-driven only — no background scrape loop in v1.
+
+**Filters**: minFollowers, maxFollowers, hasAvatar, lang, accountAge,
+excludeAlreadyOnList, excludeAlreadyContacted.
+
+**Panel UI** — new `LeadsPage.jsx` at `/leads`:
+- Source picker (bio / followers-of / engagers)
+- Query input (changes label per source)
+- Filter row + account dropdown + budget bar
+- Results table: checkbox, avatar, @handle, name, bio snippet, followers, last active
+- Bulk action: "Add selected to list →" (existing or "+ new list")
+
+**v1 cap**: 200 results, synchronous (~3-4 min). Async batch jobs for
+3,000+ scrapes go into a queue-worker (we already have the pattern from
+the action queue) and ship in v1.1 — that's the difference between
+Xreacher's free and Pro tiers.
+
+### Phase 7 — DM Co-pilot (~2 weeks)
+
+**Goal**: when prospects reply, an AI trained on the user's offer
+answers 24/7 and converts the conversation toward a goal (book a call,
+share email, click a link). Xreacher calls this "Cupid"; it's their
+headline feature.
+
+**Three modes** (per-account toggle):
+1. **Draft-only** — drafts every reply, drops it in the chip-bar; user
+   clicks Send. Same UX as today's reply suggestions, but for the full
+   thread, with brand + offer + goal context.
+2. **Assisted** — auto-sends when AI confidence ≥ threshold AND
+   message is a routine acknowledgement; drafts everything else.
+3. **Full-auto** — auto-sends every reply subject to per-conversation
+   caps. Escalates to human on detected anger / negotiation /
+   compliance-sensitive topic.
+
+**New data**
+```
+dmCopilotConfigs/{accountId}
+  enabled: bool, mode: 'draft' | 'assisted' | 'full-auto'
+  goal: 'book-call' | 'collect-email' | 'send-to-link'
+  goalLink, goalContext      // user-provided: "Cal.com URL", "what info to collect"
+  maxRepliesPerConversation  // default 5
+  escalationKeywords[]       // user list — refund, lawyer, etc.
+  pausedUntil
+
+dmCopilotThreads/{accountId}/{conversationId}
+  status: 'active' | 'goal-reached' | 'escalated' | 'paused' | 'expired'
+  goalReachedAt, goalEvidence  // "user shared email: x@y.com" or "user clicked Cal.com"
+  messages: [{ role, text, ts, modelConfidence, autoSent }]
+  outcomeSummary  // AI-generated when goal reached
+```
+
+**Trigger pipeline**
+1. Extension detects new inbound message (DOM observer on
+   `[data-testid="message-text-*"]` already exists for reply
+   suggestions) → reports `inbound-dm-received` event to backend.
+2. Backend: load thread, render context (brand profile + co-pilot
+   config + last N messages + goal), call Gemini, score confidence.
+3. If mode allows auto-send AND confidence passes threshold: queue
+   `send-dm` action (existing executor). Else: push draft to
+   chip-bar via the existing suggestions channel so the user clicks
+   Send.
+
+**Goal detection** — Gemini classifier on every inbound message:
+"Did the user just (a) book a call, (b) share an email/contact, (c)
+click the link, (d) ask a clarifying question, (e) decline, (f) get
+angry?" Stores the verdict, transitions thread state.
+
+**Safety**
+- Hard cap: max N replies per conversation (default 5) before forced
+  human takeover.
+- Abuse / sensitive-topic detector → auto-escalate to user.
+- Per-account daily auto-send cap (separate from outbound DM cap).
+- Never auto-reply to first inbound from a user we've never DM'd
+  (could be cold spam reaching us; user reviews).
+- Audit log: every auto-sent message logged with prompt, confidence,
+  goal verdict.
+
+**Panel UI** — new section in `BrandPage` and a new `CopilotPage`:
+- Brand page: extend with "Goal" config (already half there in the
+  Promote card — formalize it).
+- Co-pilot page: enable per-account, set mode, view active threads,
+  manually take over any thread.
+
+### Phase 8 — Analytics & Reporting (~1 week)
+
+**Goal**: answer "is this working?" without grepping History. The
+data already lives in `actions/` and `history/`; this is aggregation +
+UI.
+
+**Backend** — new `routes/analytics.js`:
+- `GET /api/analytics/overview?range=7d|30d|90d`
+  - DMs sent / replies received / reply rate
+  - Auto Engage actions (likes/replies/RTs) and engagement-yielded
+  - Posts published + impressions (from Phase 4 v2 scraper, when
+    available)
+  - New leads scraped, follow/unfollow ratio
+  - Account health trend (avg score across connected accounts)
+- `GET /api/analytics/campaigns/:id`
+  - Funnel: queued → sent → replied → goal-reached
+  - Per-template performance (if multiple templates wired)
+  - Best-performing prospect attributes (followers band, bio keywords)
+- `GET /api/analytics/accounts/:id`
+  - Daily cap usage / remaining
+  - Health score 30-day trend
+  - Follower delta
+  - Per-action-type 7d/30d totals
+
+Aggregation strategy: compute on read for small datasets (per-user
+data fits in memory), cached in `analyticsCache/{userId}/{key}` with
+1-hour TTL. Heavy users → move to a precompute worker on a 5-min cron.
+
+**Panel UI** — extend the existing `OverviewPage`:
+- Top row: 4 stat cards (DMs sent today, reply rate 7d, leads added
+  7d, account health avg).
+- Time-series chart: actions per day, stacked by type.
+- "Top campaigns" leaderboard.
+- "Top performing scripts" leaderboard (reply rate per template).
+- Per-account drill-down on Accounts page.
+
+Charts: add `@mantine/charts` (already pulls in recharts; ~40KB).
+
+### Phase 9 — Follow/Unfollow campaigns (~1 week)
+
+**Goal**: a fourth campaign type that mirrors the classic
+"follow-and-unfollow" growth play, with the same safety rails as the
+others. Xreacher offers it on Scale tier ($299/mo).
+
+**New campaign type**: `follow-unfollow`.
+
+**Setup**
+1. Create campaign → linked accounts.
+2. Source: list (manual handles) OR scraper output OR keyword search.
+3. Sequence config:
+   - Day 0: follow.
+   - Day N (default 5): if not following back AND we don't follow them
+     organically → unfollow.
+   - Day N+90: handle becomes eligible for follow again.
+4. Daily caps: already in §5 (`Follows: 10 / 30 / 60`).
+
+**New action types** (added to `actions.type`):
+- `follow` — extension executes follow click on profile or hover-card.
+- `unfollow` — extension executes unfollow + confirm.
+- `check-follow-back` — extension reads relationship endpoint to
+  decide whether to queue an unfollow.
+
+**Extension executors** — new clicks-and-DOM handlers in
+`lib/executor.js` for the follow/unfollow buttons. Profile-page route
+needed (we already navigate for DM sends, this is similar).
+
+**Safety**
+- Never unfollow an account we follow organically (i.e. existed
+  before any campaign followed them).
+- Never unfollow an account that follows us back.
+- Never re-follow same handle within 90 days.
+- Same health-score rules as DMs: low reply rate equivalent here is
+  low follow-back rate; under threshold → auto-pause for review.
+
+**Panel UI** — new path under `/campaigns/new/follow-unfollow`,
+mirroring the existing `NewAutoEngagePage` shape.
+
+---
+
+### Sequence + sizing
+
+Recommended order (each block can ship independently):
+
+1. **Phase 6 — Lead Scraper** (~1 week) — biggest unlock; makes Lists
+   useful without leaving the app.
+2. **Phase 8 — Analytics** (~1 week) — small, mostly aggregation +
+   charts; gives users the "is this working?" answer they'll start
+   asking the moment they have leads flowing.
+3. **Phase 9 — Follow/Unfollow** (~1 week) — fills the fourth campaign
+   slot, reuses the Scheduler/Pacer wholesale.
+4. **Phase 7 — DM Co-pilot** (~2 weeks) — heaviest lift, biggest
+   account-safety surface area; ship last so the autonomous responder
+   sits on top of the analytics that prove it's working.
+
+Total: ~5 weeks to full xreacher parity, with our existing
+differentiators (Brand depth, Auto Engage, Posts, in-X side panel)
+intact.
 
 ## 8. What's Already Done vs What's Needed
 
