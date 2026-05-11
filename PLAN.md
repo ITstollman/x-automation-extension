@@ -314,6 +314,8 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 11 — Inbox v1.1 (Mentions + Replies) | ✅ shipped (v1) |
 | Phase 12 — Stripe billing + plan caps | ✅ shipped (v1) |
 | Phase 13 — Production hardening (DM action wire-up, approvals, warming, alerts, retries) | ✅ shipped (v1) |
+| Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | 📋 planned |
+| Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 📋 planned |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -725,6 +727,261 @@ before the product is shippable to paying users.
 
 **Deferred to v1.1**: co-pilot full-auto poller (separately scoped
 in Phase 7's v1.1 follow-ups).
+
+### Phase 14 — Workflow & Intelligence Layer (~5 weeks)
+
+The shift this phase makes: the operator stops chasing the queue, and
+the app starts working *for* them. Nine sub-phases, ordered by user-
+visible impact and dependency.
+
+**14A — Content calendar + edit-in-place (~1 week)**
+Every queued action (Posts, Auto Engage replies, DM follow-ups) lives
+in a flat queue today. Replace with a `/calendar` view (week + month,
+drag-drop reschedule, color-coded by campaign type, filterable by
+account). Clicking any cell opens an editor modal: edit text with
+live X-style preview + char count, change `scheduledFor`, swap the
+linked account, "Regenerate" (re-roll the draft via Gemini), delete.
+Bulk operations: multi-select to reschedule a week forward, or
+regenerate with a new tone. Data's already there
+(`actions.payload.text` is filled at materialization); this is a UI
+pass plus a tiny PATCH endpoint on `/api/actions/:id`.
+
+**14B — Trigger engine (~1.5 weeks) — the killer feature**
+Today everything is push (campaign → outbound). Triggers are pull:
+something happens *to* the user on X → an action fires automatically.
+
+New collection `triggers/{userId}/{id}` with
+`{ source, filter, throttle, condition, action }`.
+
+Sources (event types): `comment-on-our-post`, `quote-of-our-post`,
+`like-on-our-post`, `follow`, `reply-to-keyword`, `inbound-dm`.
+Filters: min followers, has bio, language, exclude verified, regex.
+Throttle: max fires/day per trigger; cool-down per source.
+Conditions: "not already DM'd in 30d," "not in list X," "not opted
+out" (uses the prospect entity from 14D + the DNC from 14F).
+Actions: `send-dm | send-reply | add-to-list | enroll-in-campaign |
+telegram-alert | webhook`.
+
+The inbound poller already detects mentions + replies; extend it to
+also catch likes, quote-tweets, and follows (Apify can scrape each).
+Panel `/triggers` page: list + builder + activity feed showing every
+fire ("Auto-DMed @x after they replied to your post about Y").
+
+**14C — Context-aware drafter (~3 days)**
+The reply drafter today sees the parent tweet and the brand. Expand
+to: full conversation thread (parent + siblings + ancestors via
+`conversationId`), the author's recent 5–10 tweets (cached), the
+author's bio, what the user has already said to them across all
+surfaces (cross-conversation memory from `history`). Same upgrade
+on the DM co-pilot — cold openers that reference the prospect's last
+week of posts convert 3–5× generic ones.
+
+A "Context preview" toggle on every drafter surface — show the user
+exactly what the AI saw before drafting. Debuggability + user trust.
+
+**14D — Prospect timeline + light CRM (~1 week) — connective tissue**
+Every handle in a list or scrape becomes a real entity at
+`prospects/{userId}/{handle}` aggregated from history + lists +
+triggers + co-pilot threads. Prospect detail page renders a
+chronological feed (sent DM, they replied, you liked their post, they
+followed you, call booked), stage badge, manual notes.
+
+Pipeline kanban at `/pipeline`: columns =
+`cold → engaged → replied → goal-reached → customer`. Drag to move,
+or auto-transitions (reply → engaged; co-pilot detected goal-reached
+→ goal-reached; manual close → customer).
+
+This is the connective tissue: powers the "don't bother them again"
+check 14B's triggers need, and the cross-conversation memory 14C's
+drafter uses.
+
+**14E — Trust & Control bundle (~1 week)**
+Where users have no recourse today. Five pieces:
+- **Send-test before launch** — fire one DM to yourself or a sandbox
+  handle before a 500-prospect campaign goes live; verify draft +
+  spintax + image attach
+- **60-second undo** on every scheduled action that's about to
+  dispatch (matches X's own undo window)
+- **Per-action queue controls** — "skip this prospect / send now /
+  regenerate / swap account," mid-campaign, without pausing the
+  whole campaign
+- **Universal kill switch** in the header — pause everything across
+  all accounts in one click (vacation, oops, X is angry)
+- **"What actually went out"** — raw post-spintax message on every
+  history row, not just the template
+
+**14F — Opt-out + DNC system (~3 days) — not optional**
+Every day without this is a ban + legal risk:
+- **Opt-out keyword detector** — auto-flag inbound DMs containing
+  `stop | remove me | unsubscribe | not interested | spam`. Mark the
+  prospect DNC across **every** campaign forever.
+- **Cross-campaign re-contact lockout** — never DM the same handle
+  within N days regardless of which campaign queued them
+  (configurable per-user; default 30d)
+- **User-managed block list** — handles you never want contacted
+- **Pre-send pattern detection** — Gemini rates "looks generic /
+  scammy / clearly AI" with rewrite suggestions before launch
+- **Reply-rate watchdog** — campaigns at <1% reply rate over 50 sends
+  auto-pause and surface "your hook might be the problem"
+- **"You've already DM'd 80% of this list"** warning before
+  bulk-adding more prospects
+
+**14G — User-facing notifications (~3 days)**
+Users miss the wins today. Ship:
+- Email digest (daily / weekly toggle): replies received, campaigns
+  running, accounts needing attention
+- "You got a reply!" instant push (browser notification + optional
+  email)
+- Approval-queue alert when items pile up (actionable from email)
+- Campaign-completed celebration — "Cold DM Round 1: 7/100 replies,
+  3 calls booked"
+- Telegram alerts already exist for the founder; this is user-facing
+  via Postmark / Sendgrid (TBD provider; suggest Postmark for
+  transactional simplicity)
+
+**14H — Reliability + safety bundle (~1 week)**
+Architecture-level fixes that don't move pixels but prevent
+silent corruption:
+- **Idempotency keys** on every state-changing route (campaign
+  create, materialize, approve, reject) — header `Idempotency-Key`
+  stored in a Firestore TTL collection; replays no-op
+- **Plan-downgrade enforcement** — Pro → Free user has surplus
+  accounts soft-disabled (status `paused-by-plan`) instead of
+  the system pretending nothing happened
+- **Stripe webhook replay protection** — per-event idempotency on
+  `stripeEventId` (current `set merge` is best-effort)
+- **Audit log** on destructive actions — `auditLog/{userId}/{eventId}`
+  records who deleted what + when. First time a user asks "who
+  deleted my campaign?" you have an answer
+- **Optimistic UI** on approve / pause / start / reject — instant
+  feedback, roll back on error (the user-visible payoff of all of
+  the above)
+
+**14I — Observability bundle (~3 days)**
+You can't run a paying SaaS on Railway console logs:
+- **Sentry** on panel + backend (error tracking, source maps, release
+  tagging)
+- **Structured JSON logging** with a `traceId` per request,
+  propagated to worker dispatch + Gemini calls + Firestore writes
+- **One dashboard** (Grafana / Axiom / Datadog) covering actions/min,
+  error rate, Gemini p95 latency, worker queue depth, retries/hour
+- **Error-rate alerts** to the founder Telegram bot (>5% 5xx in 5min)
+
+### Phase 15 — Platform quality sweep (~3 weeks)
+
+When Phase 14 is in. These are the "no new feature, just stops
+feeling janky" wins.
+
+**15A — Code-split + skeleton loaders + optimistic UI (~3 days)**
+- Route-level lazy imports on every page (panel bundle is 353KB
+  gzipped today, Login alone pulls recharts + every page component)
+- Skeleton placeholders for header / stat cards / chart / table on
+  every detail page (the jumping logo for whole-page loads stays, but
+  rich pages render chrome immediately)
+- Optimistic UI on every mutation that currently waits for the
+  server (approve, pause, start, send-message, save-brand)
+
+**15B — Form autosave + client validation + universal confirms (~3 days)**
+- Debounced autosave to localStorage on Brand profile, template
+  editor, new-campaign forms — nav away mid-edit no longer loses
+  work
+- Client-side validation matching backend rules (auth_token hex
+  format, campaign name length, etc.)
+- Standardized `confirm()` patterns: `useConfirm()` hook with consistent
+  copy on all destructive actions (currently inconsistent coverage)
+
+**15C — Worker isolation + global X dispatch governor (~1 week)**
+- Move `lib/worker.js` out-of-process into a separate Cloud Run job
+  (or Railway second service) — API restarts no longer orphan
+  in-flight actions
+- Cross-account dispatch governor — global rate limit on outbound X
+  calls regardless of which account is sending. Today each account is
+  in-flight-gated but 5 accounts firing simultaneously from one
+  Railway egress IP is a flag
+- SIGTERM handling: drain in-flight before exit
+
+**15D — Prompt versioning + A/B + user-edit feedback loop (~1 week)**
+- All Gemini prompts pulled out of source into versioned `lib/prompts/`
+  (one file per use case — reply, post, brand-generate, co-pilot
+  draft, goal-classifier)
+- Per-user variant assignment — roll a new prompt to 10% of users,
+  measure reply-rate / goal-rate lift
+- Capture user edits to AI drafts as training signal — when a user
+  edits an AI draft before sending, store the (prompt, original,
+  edited) triple; aggregate weekly into a per-user prompt suffix
+- Model escalation: high-stakes drafts (cold DM to 50k+ follower
+  target) route to Gemini Pro; routine drafts stay on Flash
+
+**15E — TypeScript migration (~3 days, then ongoing)**
+Backend first (smaller surface), then panel. Start by typing the
+public route contract — every `apiFetch` in `panel/src/lib/api.js`
+gets a typed return shape that matches the route handler's response.
+Catches the entire class of "panel renders undefined.handle" bugs.
+
+**15F — Tests (~ongoing)**
+Zero today. The minimum viable bet:
+- **Contract tests** on every route (200 + auth-required + bad-input
+  cases). Run on CI.
+- **Smoke tests** on the worker happy paths: `materialize → claim →
+  dispatch → report → chain`. Run before every deploy.
+- **One end-to-end** via Playwright: connect cookie account → create
+  DM campaign → start → see action queued. Run nightly.
+
+### Post-Phase-15 polish backlog
+
+Tier 4 — Intelligence:
+- "What should I post today?" daily 3-suggestion generator
+- Hook diagnostic (low-reply campaigns get AI-rewrite + A/B)
+- Competitor tracker (pin 3-5 accounts; cadence + what's working)
+- Time-of-day intelligence (schedule DMs for each prospect's peak
+  activity hour)
+- "Don't sound like AI" pre-flight filter
+- Voice-match auto-fill (analyze user's last 100 tweets to pre-fill
+  brand profile)
+- Cohort analytics ("DMs Mon-Thu convert 2× Fri")
+
+Tier 5 — Power user:
+- Cmd+K global search (prospects / campaigns / templates / conversations)
+- Keyboard shortcuts on approval queue + tables
+- Multi-tag prospects + saved filters on every list view
+- "Duplicate this campaign" + "Copy brand from account A to B"
+- Bulk prospect operations
+
+Tier 6 — Ecosystem + ops:
+- Webhook actions (Zapier-style outbound on reply / goal / trigger)
+- Cal.com / Calendly detection in goal context (auto-tag the booking
+  link)
+- Exportable reports (PDF monthly digest, per-template ROI, CSV
+  exports anywhere)
+- Vacation mode (pause-all + scheduled resume + Telegram-resume
+  alert)
+- Sample campaign starters per industry (clone-and-customize
+  playbooks)
+
+Tier 7 — UX completeness:
+- Dark mode toggle (Mantine supports it; just wire the toggle)
+- Time-zone setting per user (UTC pin option for power users)
+- Mobile-first thread composer (current is thumb-typeable but not
+  designed for it)
+- Approve-from-phone (single-tap approve/reject, no modal)
+- Global account switcher in the header (filters every page to that
+  account's data)
+
+Tier 8 — Scale/compliance:
+- Firestore Security Rules layer (defense-in-depth beyond
+  `where userId == req.userId`)
+- Encryption-key rotation via KMS
+- History archival (>90d rows move to cold storage)
+- PII redaction in Gemini prompts (regex strip emails/phones before
+  send)
+- Multi-region failover (Apify, Stripe, Telegram each have single
+  points today)
+- Usage-based metering per plan (Gemini calls + scrape volume, not
+  just account count)
+
+The order through Tier 4-8 isn't fixed — pull in based on which
+real user pain shows up first. The Phase 14-15 commitment is the
+intentional plan; everything below is the option pool.
 
 ## 8. Current capability snapshot
 
