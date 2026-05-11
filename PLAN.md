@@ -317,6 +317,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | 📋 planned |
 | Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 📋 planned |
 | Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 📋 planned |
+| Phase 17 — Operator workflow depth (smart lists, suppression, outcome learning, per-prospect context, inbox ergo, trigger chains, pacing depth, brand+prompt depth, template engine, workflow ergo) | 📋 planned |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -1236,6 +1237,227 @@ Total: ~9 weeks of focused build for Phase 16. Combined with Phases
 14-15 (~8 weeks), the next-three-phase plan is ~17 weeks of work to
 get from current state to "everything a serious X operator could
 ask for, plus the underlying engine to support it."
+
+### Phase 17 — Operator workflow depth (~5–6 weeks)
+
+The capability gaps in Phase 16 are about *what the engine can do*.
+Phase 17 is about *what running it day-to-day actually feels like
+for someone who lives inside it 6 hours a day*. Ten sub-phases —
+each one is "user already wanted this on day 7 but tolerated its
+absence."
+
+**17A — Smart / dynamic lists + suppression layer (~1 week)**
+Lists today are static collections of handles. Real operators want:
+- **Dynamic / smart lists** — a list defined by a query that
+  auto-updates (e.g., "all founders in SaaS, 1k-10k followers,
+  posted in last 7 days"). Re-evaluates daily.
+- **Saved searches** in the Lead Scraper — same idea on the
+  scraper side
+- **Suppression lists** — global do-not-contact, "already-customer"
+  list, "churned-customer" list. Cross-campaign suppression that's
+  semantically richer than the opt-out DNC (which is triggered
+  reactively).
+- **List intersection / union / difference** — "everyone in A
+  AND B," "in A but not B," "in A or B"
+- **Prospect dedup across lists** — if a handle is in 3 lists,
+  treat as one entity in pipeline + history
+- **Auto-prune** banned / deleted / suspended accounts from lists
+  on a schedule
+- **Freshness indicator** — last-tweet >90 days = inactive,
+  deprioritize in dispatch order
+
+**17B — Recurring scrapes + persona presets (~3 days)**
+The Lead Scraper today is one-shot. Set-and-forget pipelines:
+- **Saved scrape sessions** — re-run yesterday's query with one
+  click
+- **Recurring scrapes** — daily / weekly cadence, results auto-add
+  to a designated list (with the freshness filter so you only get
+  *new* accounts each run)
+- **Diff scrapes** — "show me accounts that match today but didn't
+  yesterday" — surfaces just-followed, just-engaged-with-X, etc.
+- **Negative filters** — "anyone matching X BUT EXCLUDE accounts
+  that follow @competitor-handle" (audience anti-overlap)
+- **Persona template library** — predefined criteria for common
+  targets: "indie hackers," "SaaS founders," "agency owners,"
+  "recruiters." Clone-and-tweak.
+
+**17C — Outcome learning loop (~1 week) — compounds over time**
+Every conversation that ends without a win-tag is wasted
+intelligence. Build the feedback loop:
+- **Win / loss tagging** at conversation end — `booked-call`,
+  `interested-no-action`, `pricing-objection`, `not-fit`, `ghosted`,
+  `customer`, `churned-customer`. AI suggests; user confirms.
+- **Outcome attribution** — "this DM led to a booked call" / "this
+  reply led to a sale of $X." Manual at first, plus auto-detection
+  via Cal.com / Stripe webhook integration where wired.
+- **Reply rate prediction per template / hook** — Gemini scores
+  every draft against the user's historical reply-rate data on
+  similar hooks: "this opener has a 12% predicted reply rate vs
+  your historical average of 7%."
+- **Template performance ranking** — weekly auto-ranking of all
+  active templates by reply rate + win rate; flag bottom-quartile
+  for retirement
+- **Suggestion engine** — based on win/loss data, AI suggests
+  template tweaks ("your top hook started with a question; your
+  bottom hooks all started with 'Hey'")
+- **Wins feed** in the panel — every reply, every booked call,
+  every goal-reached surfaces as a card on the Overview
+
+New collection `outcomes/{userId}/{conversationId}` plus tag
+metadata on `dmCopilotThreads` and `history`.
+
+**17D — Per-prospect context + universal tagging (~1 week)**
+The drafter today knows the brand and the conversation. Power
+operators also know specific things about specific prospects:
+- **Per-prospect notes** visible to the AI in every draft — "founder
+  of Acme, met at SaaStr, talked about pricing, wants discount"
+- **Universal tagging** as a first-class concept on prospects,
+  campaigns, lists, templates, and history. Multi-tag (not just
+  stage). Filter and segment everywhere by tag.
+- **Recently viewed prospects bar** — fast back-and-forth between
+  prospects you're working
+- **Quick-actions context menu** on every prospect row — DM now,
+  add to list, block, copy URL, view on X, jump to convo
+- **Drag-drop prospects between lists**
+- **Per-prospect DM count display** before scheduling — "we've DM'd
+  them 4 times across 2 campaigns in 6 months; sure?"
+- **Pipeline stages auto-update from outcome tags** (17C feeds 17D)
+
+**17E — Inbox ergonomics (~1 week)**
+The unified Inbox today shows conversations and lets you reply.
+Power-user table stakes:
+- **Saved replies** — quick canned responses (separate from
+  campaign templates) for the same canned replies users send 20×/day
+  ("Sure, here's the link" / "Let me check and circle back")
+- **Conversation snooze** for N days — disappears, comes back as
+  a tracked reminder
+- **Pin** important threads to top
+- **Mark unread** after viewing (re-surface later)
+- **Bulk archive** old threads
+- **Search within a conversation**
+- **Translate conversation** — view in your language if prospect
+  wrote in theirs; reply in theirs auto-translated
+- **DM scheduling** for one-off sends — write now, send at 2am
+  their time (not part of a campaign)
+- **Multi-message DM** — split a long message across N consecutive
+  sends with delay (human-shape)
+- **DM read receipts surfaced** — X exposes them via the same
+  endpoint; show "delivered / read / replied"
+- **Quick context menu** per conversation (mark spam / customer /
+  follow-up / etc.)
+
+**17F — Trigger sophistication (~1 week) — beyond Phase 14B basics**
+Phase 14B ships a one-shot trigger model. Real automation graphs
+need:
+- **Trigger chains** — trigger A fires → trigger B watches → trigger
+  C fires conditional on B's result. Multi-step.
+- **Delayed triggers** — "3 days after they followed → DM"; "1 week
+  after no reply → polite nudge"
+- **Trigger A/B testing** — same trigger, two action variants,
+  auto-declare winner
+- **Trigger preview / dry-run** — "given yesterday's data, this
+  trigger would have fired N times against these accounts" before
+  flipping on
+- **Trigger fire history** — every fire logged with the matching
+  event, what was sent, and the outcome
+- **Quiet-mode triggers** — fire at most once per N hours regardless
+  of how many events match
+- **Cross-account triggers** — "if any of my 5 accounts gets
+  mentioned, trigger fires from a specific account"
+
+**17G — Pacing depth (~3 days)**
+The pacer today knows: random gap, working hours, daily caps,
+warming. More realism + safety:
+- **Per-action-type pacing** — DMs in 9-6, posts at 11am/3pm/8pm,
+  replies anytime, follows weighted toward weekday mornings
+- **Lunch break gap** — auto-pause 12-1pm in account's tz
+- **Holiday calendar** — auto-pause on national holidays (US
+  Federal default, configurable per-account)
+- **Per-prospect time zone scheduling** — when prospect has a stated
+  tz / city, schedule DM dispatch for their working hours, not the
+  operator's
+- **Circuit breaker** — auto-pause campaign if failure rate crosses
+  threshold (say >20% over 10 actions)
+- **Burst protection** — hard cap on max N actions per T minutes
+  per account, regardless of campaign config
+
+**17H — Brand + prompt depth (~1 week)**
+The brand profile gives the drafter style. More handles:
+- **Per-campaign tone override** — campaign-level "be aggressive"
+  or "be gentle" overlay without rewriting brand
+- **Forbidden words list** — concrete words the drafter must never
+  use ("unlock," "delve," "I'd be happy to," etc.)
+- **Forbidden brand-mention list** — competitor names the drafter
+  must never invoke
+- **Few-shot examples per campaign** — paste 3 examples of "this
+  is exactly how I want the DM to look"; AI uses them as anchors
+- **Negative examples (rejected drafts)** — when a user edits or
+  rejects a draft, capture both versions; AI gets "don't do this"
+  in addition to "do this"
+- **Cold open variation generator** — generate 5 distinct opening
+  hooks for a single template, pick favorites to A/B
+- **Auto-CTA insertion every N posts** — keep promotion present
+  but subtle; rotate variants
+
+**17I — Template engine depth (~3 days)**
+The spintax + variable engine works; visibility into how it works
+doesn't:
+- **Spintax tester** — render 10 random samples of a template
+  before launch with per-variant predicted reply rate
+- **Template version history** — every save snapshotted; rollback
+  to any prior version
+- **Template performance comparison view** — side-by-side metrics
+  for any N templates of the same type
+- **Spintax richness score** — flag templates using `{a|b|c}` in
+  only 1-2 spots ("try more variety in the hook")
+- **Variable validation** — flag templates referencing
+  `{{var_name}}` that doesn't exist on the linked list
+- **Live preview** while editing — render with sample prospect
+  data inline
+
+**17J — Workflow ergonomics (~3 days)**
+Death-by-a-thousand-cuts polish:
+- **Bulk handle paste** — paste 500 handles, dedupe + validate +
+  add to list in one action (better than CSV for ad-hoc lists)
+- **DM preview as recipient sees it** — render the message exactly
+  as it'll appear in their X inbox, mobile + desktop side-by-side
+- **Campaign cloning with substitutions** — "duplicate this
+  campaign but swap @accountA for @accountB and list X for list Y"
+- **Manual retry button** on every failed action — separate from
+  auto-retry-with-backoff; user-triggered "send this now"
+- **Self-account auto-exclusion** — never include the user's own
+  accounts in scrape targets, DM targets, or trigger fires
+- **Recently viewed everything** quick-access bar — campaigns /
+  prospects / templates / threads
+- **Tweet detail page** — drill into one posted tweet, see all
+  engagement (who liked, who replied, who QT'd, who bookmarked)
+
+### Recommended Phase 17 build order
+
+Different from the alphabetical labels. Optimized for compounding
+impact:
+
+1. **17C — Outcome learning loop** *(1 week)* — every other tier
+   gets better the moment win/loss data starts flowing in
+2. **17A — Smart lists + suppression** *(1 week)* — eliminates
+   the manual list-curation tax that scales linearly with users
+3. **17D — Per-prospect context + universal tagging** *(1 week)* —
+   massive drafter quality lift; ties to 17C's outcome tags
+4. **17F — Trigger sophistication** *(1 week)* — Phase 14B is
+   one-shot; chains + delays + A/B make triggers an actual graph
+5. **17E — Inbox ergo** *(1 week)* — table stakes for any user
+   processing >20 DMs/day
+6. **17H — Brand + prompt depth** *(1 week)* — drafter quality
+   pass
+7. **17B — Recurring scrapes** *(3 days)* — set-and-forget lead
+   pipelines
+8. **17G — Pacing depth** *(3 days)* — safety win, mostly invisible
+9. **17I — Template engine depth** *(3 days)* — power-user polish
+10. **17J — Workflow ergo** *(3 days)* — the last-mile polish
+
+Total: ~6 weeks of focused build for Phase 17. Combined with
+Phases 14-16, the four-phase commitment is ~23 weeks (~5.5 months)
+to a product that's genuinely operator-grade.
 
 ## 8. Current capability snapshot
 
