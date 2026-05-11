@@ -726,27 +726,38 @@ before the product is shippable to paying users.
 **Deferred to v1.1**: co-pilot full-auto poller (separately scoped
 in Phase 7's v1.1 follow-ups).
 
-## 8. What's Already Done vs What's Needed
+## 8. Current capability snapshot
 
-| Capability | Status |
-|------------|--------|
-| Floating widget UI | ✅ Done |
-| AI reply suggestions (DM + tweet) | ✅ Done |
-| Brand profile | ✅ Done |
-| Local history log | ✅ Done |
-| DM "hi" send mechanic | ✅ Done (basis for DM Outreach) |
-| Tweet send mechanic | ✅ Done (basis for Auto Engage replies & posting) |
-| Settings UI | ✅ Done |
-| Backend (Express + Firestore) | ❌ Needed |
-| Dashboard | ❌ Needed |
-| Auth + multi-account | ❌ Needed |
-| Campaigns | ❌ Needed |
-| Lists / spintax / sequences | ❌ Needed |
-| Action queue / scheduler | ❌ Needed |
-| Scheduler / Pacer | ❌ Needed |
-| Multi-tenant auth (Firebase) | ❌ Needed |
-| Account health / safety system | 🟡 Partial (today's settings) |
-| News ingestion | ❌ Needed (Phase 4) |
+As of Phase 13, the panel + backend stack at `app.xlift.ai` is shippable
+end-to-end. The legacy "what's done vs needed" table from Phase-0
+planning was replaced with this snapshot of real surfaces.
+
+| Surface | Status | Notes |
+|---------|--------|-------|
+| Backend (Express + Firestore) on Railway | ✅ | multi-tenant, Firebase Auth |
+| Panel (React + Mantine + Vite) | ✅ | `app.xlift.ai`, full mobile responsive |
+| Chrome extension (in-X widget + reply suggestions) | ✅ | Dashboard/Topics/Accounts stubs in `sidepanel.html` are legacy decorative |
+| Cookie-mode X auth (paste cookies + sticky proxy) | ✅ | encrypted at rest, rotate via "Update cookies" |
+| DM Outreach campaigns | ✅ | sequences + spintax + skip-if-replied via worker |
+| Auto Engage campaigns | ✅ | search via Apify (rettiwt 404s from data-center IP) |
+| Automated Posts campaigns | ✅ | Gemini-generated, scheduled, single-account |
+| Follow / Unfollow campaigns | ✅ | day-0 follow → day-N check → conditional unfollow |
+| Lead scraper (bio / followers-of / retweeters) | ✅ | per-account daily budget, Apify-backed |
+| Inbox (DMs + Mentions + Replies) | ✅ | mentions/replies need `APIFY_TOKEN` |
+| DM Co-pilot Draft mode | ✅ | brand-aware drafts in ChatPage |
+| DM Co-pilot Assisted / Full-auto | 🟡 v1.1 | UI labelled, poller deferred |
+| Brand profile + per-account override | ✅ | sparse merge over global |
+| Multi-account analytics + per-campaign breakdown | ✅ | overview/campaign/account endpoints |
+| Approval queue | ✅ | `/approvals` page + bulk approve |
+| Stripe billing (Free / Pro $67 / Scale $299) | ✅ | inert until env vars set |
+| Plan-based account caps | ✅ | enforced on connect-cookie |
+| Per-account health score + auto-pause < 40 | ✅ | watchdog tick every 5 min |
+| Account warming (20% → 100% over 14d) | ✅ | auto-enabled on new connects |
+| Retry-with-backoff on transient failures | ✅ | 3 attempts, exponential |
+| Stale-claim sweep (worker crash recovery) | ✅ | every 5 min |
+| Telegram founder-bot alerts (needs_reauth + health) | ✅ | needs `TELEGRAM_BOT_TOKEN` |
+| News / RSS ingestion for Auto Posts | 🟡 v1.1 | Phase 4 v2 backlog |
+| Viral pattern miner + post performance feedback | 🟡 v1.1 | Phase 4 v2 backlog |
 
 ## 9. Tech Stack
 
@@ -766,10 +777,26 @@ in Phase 7's v1.1 follow-ups).
 4. **CAPTCHA / login challenges** — X may step up challenges on automated accounts. Mitigation: pause-on-challenge, alert user, never auto-solve.
 5. **TOS / legal** — automated DM at scale may violate X's policies. Document the risk in onboarding; users assume responsibility.
 
-### Open questions to resolve before Phase 0
-1. **Single-tenant first** (just for you), or multi-tenant from day 1?
-2. **AI Boss runtime**: server-side always-on, or only when at least one extension is online?
-3. **Browser-profile management**: built-in, or assume the user manages Chrome profiles manually?
-4. **Pricing**: free trial → paid tiers? Or self-hosted only?
-5. **Brand profile sync**: keep extension-local or sync to backend (needed for AI Boss)?
-6. **Approval-queue default**: opt-in or opt-out?
+### Resolved architecture decisions (locked in over Phases 0–13)
+The Phase-0 open questions are all settled. Recording outcomes here so
+future re-litigation has a baseline:
+
+1. **Multi-tenant from day 1** — Firebase Auth on the panel, every
+   Firestore doc scoped by `userId`. (Shipped Phase 0.)
+2. **No AI Boss** — deterministic Scheduler + Materializer + on-demand
+   Gemini calls at action time. AI is a tool the system invokes,
+   never an orchestrator. (Settled before Phase 1.)
+3. **No built-in browser-profile manager** — users run separate
+   Chrome profiles per X account themselves; the panel doesn't
+   try to orchestrate the browser. (Cookie-mode + sticky proxy is
+   the cloud equivalent. Shipped Phase 1 / 6.)
+4. **Free + paid tiers via Stripe** — Free (1 account) / Pro $67
+   (3 accounts) / Scale $299 (25 accounts). Inert without
+   `STRIPE_*` env vars. (Shipped Phase 12.)
+5. **Brand profile syncs to backend** — `brandProfiles/{userId}`
+   global + optional `xAccounts/{id}.brandOverride` patch. Consumed
+   by auto-engage, auto-posts, and the co-pilot via
+   `lib/brand-merge.loadBrandFor`. (Shipped Phase 10A.)
+6. **Approval queue is opt-in per campaign** — `approvalMode` flag;
+   when on, actions wait in `/approvals` for human review.
+   (Shipped Phase 13.)
