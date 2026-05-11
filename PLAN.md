@@ -295,7 +295,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 
 ## 7. Phased Roadmap
 
-### Status snapshot (2026-05-07)
+### Status snapshot (2026-05-11)
 
 | Phase | Status |
 |-------|--------|
@@ -314,7 +314,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 11 — Inbox v1.1 (Mentions + Replies) | ✅ shipped (v1) |
 | Phase 12 — Stripe billing + plan caps | ✅ shipped (v1) |
 | Phase 13 — Production hardening (DM action wire-up, approvals, warming, alerts, retries) | ✅ shipped (v1) |
-| Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | 📋 planned |
+| Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | 🟡 in progress — 14A/14C/14F shipped; 14B/14D/14E/14G/14H/14I pending |
 | Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 📋 planned |
 | Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 📋 planned |
 | Phase 17 — Operator workflow depth (smart lists, suppression, outcome learning, per-prospect context, inbox ergo, trigger chains, pacing depth, brand+prompt depth, template engine, workflow ergo) | 📋 planned |
