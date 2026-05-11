@@ -316,7 +316,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 13 — Production hardening (DM action wire-up, approvals, warming, alerts, retries) | ✅ shipped (v1) |
 | Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | ✅ shipped (v1, all sub-phases). Deferred to v2: 14E send-test+60s undo, 14G email digest, 14H idempotency+optimistic UI, 14I Sentry+dashboard |
 | Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 🟡 in progress — 15A/15B/15D (v1) shipped; 15C worker isolation, 15D A/B variant routing, 15E TypeScript, 15F tests pending |
-| Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 🟡 in progress — 16C/16G/16I shipped (v1); 16A/16B/16D/16E/16F/16H pending |
+| Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 🟡 in progress — 16A/16C/16E/16F/16G/16I shipped (v1); 16B/16D/16H pending |
 | Phase 17 — Operator workflow depth (smart lists, suppression, outcome learning, per-prospect context, inbox ergo, trigger chains, pacing depth, brand+prompt depth, template engine, workflow ergo) | 📋 planned |
 | Phase 18 — AI Operator Layer (campaign gen, chat-with-data, voice digest, daily assistant, prompt visibility, self-moderation, list cleaner, brand improver, voice control, migration AI) | 📋 planned |
 | Phase 19 — Workflow Engine (unified trigger+delay+condition+action graph; visualizer; multi-path; wait-for-event; cron schedules; library; debug mode) | 📋 planned |
