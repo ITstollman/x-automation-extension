@@ -316,6 +316,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 13 — Production hardening (DM action wire-up, approvals, warming, alerts, retries) | ✅ shipped (v1) |
 | Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | 📋 planned |
 | Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 📋 planned |
+| Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 📋 planned |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -982,6 +983,259 @@ Tier 8 — Scale/compliance:
 The order through Tier 4-8 isn't fixed — pull in based on which
 real user pain shows up first. The Phase 14-15 commitment is the
 intentional plan; everything below is the option pool.
+
+### Phase 16 — Core capability depth (~6–8 weeks)
+
+What the engine itself can't yet do *on X*. Nine sub-phases covering
+new action types, content sourcing, smarter scraping/engagement,
+richer sequence mechanics, conversation depth, account robustness,
+posting intelligence, and queue-level ops. Independent of the
+workflow / quality / business work in Phases 14–15 + Tiers 4–8.
+
+**16A — More native X action types (~1.5 weeks)**
+The product today supports send-dm, post, like, retweet, reply,
+follow, unfollow, search. The native surface is way bigger:
+- **Quote-tweet campaigns** as a primary type (not just inside Auto
+  Engage's 5% action mix)
+- **Bookmarking** as an action — silent engagement signal X weighs
+  positively
+- **X Lists management** — create, add, remove members
+  programmatically; bulk-add a scraped cohort into a list for
+  research / engagement targeting
+- **Pin / unpin posts** — auto-pin your week's best
+- **Auto-delete posts after N days** — privacy / pivot cleanup
+- **Profile updates on a schedule** — bio, name, location, website,
+  pinned-tweet rotation; A/B test bio CTAs
+- **Profile picture / banner scheduling** — seasonal swaps
+- **Threads composer** as first-class campaign content — currently
+  Auto Posts is single-post; threads are where engagement lives
+- **X Spaces scheduling** + auto-promote via post + DM blast
+- **Group DMs** — create a thread with N people at once
+- **Mention/tag** specific accounts when scheduling posts
+- **Bulk delete old tweets** — privacy + pivot cleanup
+- **Block / mute** as defensive automation actions
+
+New action types: `quote`, `bookmark`, `list-create`, `list-add`,
+`list-remove`, `pin`, `unpin`, `delete-post`, `profile-update`,
+`thread`, `space-schedule`, `group-dm`, `block`, `mute`.
+Each needs an executor handler in cookie-executor + worker chain
+support if the action triggers a downstream effect.
+
+**16B — Content sourcing pipelines (~1 week)**
+Auto Posts today only generates from brand profile + topic. Real
+content engines pull from outside X:
+- **RSS / Substack / Medium feed ingestion** — your own blog
+  publishes → AI summarizes into a tweet → schedules it
+- **Reddit / Hacker News** scraper → niche-relevant repurposing
+- **Google News / news API** alerts → reactive commentary on
+  breaking industry events
+- **YouTube channel watcher** → auto-tweet on new uploads
+- **Podcast RSS** → auto-clip-and-post the headline soundbite
+- **Webhook → post** — external system triggers a tweet
+  (Webflow CMS publish, Zapier, etc.)
+- **Evergreen recycling pool** — flag a post as evergreen; app
+  recycles winners every N months
+- **Tweet-from-Google-Sheets** — sync sheet rows → scheduled posts
+
+New collection `contentSources/{userId}/{sourceId}` with
+`{ type, config, scheduleRule, mappingTemplate }`. New action type
+`source-ingest` that runs the source, generates draft tweets, and
+queues them through Auto Posts' normal pipeline (so the same
+human-shape pacing applies).
+
+**16C — Scraper depth (~1 week) — highest leverage in the phase**
+The Lead Scraper today does keyword tweet search (dedup authors),
+followers-of-handle, and retweeters-of-tweet. Adds:
+- **Likers of a tweet** — explicitly noted as v1.1 in Phase 6,
+  never shipped (Apify can do it)
+- **Following list of a handle** — audience-of-audience is often
+  higher-quality than just followers
+- **X List members** — scrape members of any public list
+- **Date-range tweet search** — "all @x tweets between Jan-Mar"
+  historical mining
+- **True bio-keyword search** — currently the "keyword" path searches
+  tweets and dedupes authors; this is the same query against
+  bios (Apify's profile-search actor)
+- **Geographic search** — accounts / tweets from a city or country
+- **Engagement-threshold filter** — "accounts with >10k followers AND
+  >100 avg likes per recent post"
+- **Behavior-based scrape** — "accounts that engaged with competitor
+  @x in the last 30 days"
+- **Bulk profile enrichment** — paste a list of handles, get follower
+  count / bio / last tweet / language for each
+- **AI lead scoring** — Gemini scores each scraped lead 1-100 on fit
+  against the user's brand profile; the panel sorts highest-first
+
+`lib/x-scraper` extends to new sources; each routes through Apify
+(actor variants) or rettiwt depending on rate-limit profile.
+`scrapedLeads/{userId}/{handle}` doc gains `aiFitScore`, `lastSeenAt`,
+`tagsFromScrape[]`.
+
+**16D — Engagement intelligence (~1.5 weeks)**
+Auto Engage today is "search keywords → engage on matches." Smart
+engagement layers on top:
+- **Reply boost** — when one of YOUR posts crosses an engagement
+  threshold in the first 30 min, auto-engage with the top
+  commenters (sub-15-min reply window converts best on X)
+- **Quote-tweet farming** — find viral posts in your niche
+  (`>N likes in <T hours` filter), auto-generate add-on commentary
+  as a QT
+- **Niche timeline mining** — instead of keyword search, follow
+  N seed accounts and Auto Engage on **their** timelines
+- **Topical "join the conversation"** — detect trending topics in
+  your niche (Apify trends actor), auto-generate a relevant post in
+  time to ride the wave
+- **Defensive engagement** — auto-detect hostile replies to your
+  posts → de-escalation reply (Gemini-classified hostility +
+  pre-approved templates)
+- **Engagement pods** coordination (multi-account boost) — gated
+  behind explicit consent + clear safety messaging
+
+New campaign type `reply-boost` that watches your own recent posts
++ dispatches engagement actions on hot ones. New trigger sources
+match (`our-post-going-viral`, `niche-trend-detected`,
+`hostile-reply-on-our-post`).
+
+**16E — Sequence mechanics (~1.5 weeks)**
+DM Outreach today is linear: step 0 → step 1 → step 2. Real outbound
+needs:
+- **Conditional branches** — "if they engaged with step 1, send
+  step 2A; else step 2B" (engagement = like / reply / view / open)
+- **A/B test campaigns** at the campaign level (not just post
+  variants) — same list, two templates, split 50/50, auto-declare
+  winner after N replies
+- **Multi-channel coordinated sequences** — like → wait 2d → reply
+  → wait 3d → DM (warm-then-strike pattern)
+- **Re-engagement / win-back campaigns** — past prospects who
+  replied positively but never converted, quarterly outreach
+  with a different angle
+- **Send-time personalization** — at dispatch time, re-write the DM
+  using the prospect's last 24h of tweets (more relevant than
+  materialization-time generation)
+- **Dynamic variables resolved at send-time** —
+  `{{last_tweet}}`, `{{follower_count}}`, `{{recent_topic}}`,
+  `{{day_of_week}}` filled in microseconds before send
+- **Pause campaign at N count for review** — "send 50 then auto-
+  pause" so the user can sanity-check the response rate
+- **Resume preview** — show the next 5 prospects + final drafts
+  before clicking resume
+
+Sequence schema extends to support conditions on each step
+(`{ if: 'engagement', then: stepId, else: stepId }`).
+
+**16F — Conversation depth (~1 week)**
+The Inbox + Co-pilot work today, but conversations are flat:
+- **Inbox auto-categorization** — Gemini buckets inbound DMs into
+  `lead | customer | spam | noise | support` so you triage at a
+  glance
+- **Auto-tag conversations** with topic + outcome (`asked-pricing`,
+  `complaint`, `integration-question`, `objection`, `interested`)
+- **One-line conversation summary** at the top of every thread
+- **Promised-follow-up tracker** — AI detects "I'll send you the
+  link tomorrow" → reminder fires tomorrow with the original context
+- **DM voice notes** — record audio inside the panel and attach
+- **DM image with auto-caption** — drop image, AI captions in your
+  voice
+- **Conversation summary** on every prospect detail page —
+  one-paragraph synthesis of the entire history
+
+New collections / fields: `dmCopilotThreads.{tags, category,
+summary, promisedFollowUps[]}`.
+
+**16G — Account robustness (~1 week)**
+Cookie sessions are fragile. Make them less fragile:
+- **Background heartbeat probe** — every 30 min, GET
+  `/account/settings` on every active account to validate the
+  session before it dies mid-campaign
+- **Auto-refresh ct0** — we capture rotated ct0 when X mints one in
+  a write response, but never proactively refresh; should run a
+  scheduled mint via a no-op write
+- **Shadowban / soft-suspension probe** — periodic "does my last
+  tweet appear in search?" + "does my profile load when logged out?"
+  checks; flag account
+- **DM-to-self ownership verify** on connect — confirms the user
+  actually owns the X account they're pasting cookies for
+- **Multi-cookie failover** per account — accept multiple sets of
+  cookies, rotate on 401
+- **Handle-change detector** — alert when the user renames their X
+  account so we re-resolve `userIdOnX` and update everywhere
+
+`xAccounts.heartbeatStatus`, `lastHeartbeatAt`, `shadowbanProbe`.
+New worker tick variant for the heartbeat sweep.
+
+**16H — Posting intelligence (~1 week)**
+Auto Posts is dumb-scheduled today. Make it smart:
+- **Best time per content type** — informational posts ≠ hot takes
+  ≠ memes; each has a different optimal window per account
+- **Day-of-week themes** — Monday motivation, Tuesday tip, Friday
+  wins (user-configurable per account)
+- **Evergreen pool with auto-recycling** — your top 10 posts replay
+  every quarter
+- **Draft pool / pile** — write 20 posts in one session, schedule
+  from a draft library on a cadence
+- **Style fingerprint** — analyze user's last 100 tweets, capture
+  metrics (avg length, emoji rate, sentence structure, hook
+  patterns, paragraph cadence)
+- **Style consistency score** — every outgoing draft scored against
+  the fingerprint; drift alert if 5 in a row deviate
+- **Tone toggle per campaign** — friendly / professional / contrarian
+  / playful switch that adjusts the generator prompt
+
+`brandProfile.styleFingerprint` (computed), `auto-posts.config.theme`,
+`auto-posts.draftPool[]`.
+
+**16I — Queue + campaign ops robustness (~3 days)**
+Operating long-running campaigns at scale needs more controls:
+- **Bulk reschedule** — "shift all pending actions for @account by
+  4 hours" / "compress all of next week into 3 days"
+- **Account swap mid-campaign** — move running queue from account A
+  to account B (e.g., A hit warming wall, B has headroom)
+- **Reusable sequence library** — save a sequence ("3-step founder
+  cold reach") + reuse across campaigns
+- **Reusable campaign templates** — save full campaign config
+  (sequence + filters + accounts + approval mode) as a clonable
+  template
+- **Per-prospect DM count display** — before scheduling, the panel
+  shows "we've DM'd them 4 times in 6 months across 2 campaigns"
+- **Link rotation** — instead of same URL in every DM, rotate
+  through tracked variants per prospect
+- **Auto UTM appending** on outbound links per campaign
+
+New collections: `sequenceTemplates/{userId}/{id}`,
+`campaignTemplates/{userId}/{id}`. New routes for bulk-reschedule
++ account-swap + link-rotation config.
+
+### Recommended Phase 16 build order
+
+Different from the alphabetical labels. Optimized for needle-moving
+per dev-day given Xlift's current state:
+
+1. **16C — Scraper depth** *(1 week)* — biggest leverage; the lead
+   side is shallow and most user wins start with better targeting
+2. **16E — Sequence mechanics** *(1.5 weeks)* — conditional + send-
+   time personalization make every existing DM Outreach campaign
+   convert better without new collections
+3. **16D — Engagement intelligence** *(1.5 weeks)* — reply-boost +
+   niche timeline mining unlock the "free engagement" tactic that's
+   hardest to do manually
+4. **16A — X action types** *(1.5 weeks)* — biggest "things we should
+   already do" pile; threads composer alone is a top-three feature
+   ask in this category
+5. **16F — Conversation depth** *(1 week)* — triages the inbox at
+   scale, sets up real CRM later
+6. **16G — Account robustness** *(1 week)* — prevents the silent
+   session failures that kill long-running campaigns
+7. **16B — Content sourcing** *(1 week)* — Auto Posts content
+   engine; one-shot value once it's in
+8. **16H — Posting intelligence** *(1 week)* — drives Auto Posts
+   from dumb-scheduled to actually-good
+9. **16I — Queue ops robustness** *(3 days)* — quality-of-life pass
+   to close out
+
+Total: ~9 weeks of focused build for Phase 16. Combined with Phases
+14-15 (~8 weeks), the next-three-phase plan is ~17 weeks of work to
+get from current state to "everything a serious X operator could
+ask for, plus the underlying engine to support it."
 
 ## 8. Current capability snapshot
 
