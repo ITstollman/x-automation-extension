@@ -318,6 +318,11 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 📋 planned |
 | Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 📋 planned |
 | Phase 17 — Operator workflow depth (smart lists, suppression, outcome learning, per-prospect context, inbox ergo, trigger chains, pacing depth, brand+prompt depth, template engine, workflow ergo) | 📋 planned |
+| Phase 18 — AI Operator Layer (campaign gen, chat-with-data, voice digest, daily assistant, prompt visibility, self-moderation, list cleaner, brand improver, voice control, migration AI) | 📋 planned |
+| Phase 19 — Workflow Engine (unified trigger+delay+condition+action graph; visualizer; multi-path; wait-for-event; cron schedules; library; debug mode) | 📋 planned |
+| Phase 20 — Public API + Integration Platform (REST + GraphQL; webhook firehose; native Zapier/Make/n8n; embeddable widgets; developer docs) | 📋 planned |
+| Phase 22 — Predictive intelligence (outcome prediction; smart pacing; routing; reply-timing; engagement score; super-fan detection) | 📋 planned |
+| Phase 23 — Multi-platform expansion (PlatformAdapter abstraction; LinkedIn/Reddit/Threads/Bluesky; cross-platform inbox + identity) | 📋 planned |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -1458,6 +1463,174 @@ impact:
 Total: ~6 weeks of focused build for Phase 17. Combined with
 Phases 14-16, the four-phase commitment is ~23 weeks (~5.5 months)
 to a product that's genuinely operator-grade.
+
+### Phase 18 — AI Operator Layer (~4 weeks)
+
+The product today asks the operator to configure everything (brand
+fields, list filters, sequence steps, trigger conditions). Phase 18
+turns the app into an agent that operates itself under direction —
+the single biggest UX leap on the roadmap.
+
+- **18A · AI campaign generator from goal** — type
+  *"book 3 calls/week from SaaS founders, 1k–10k followers"* → AI
+  generates target criteria + scrape + sequence + brand override +
+  trigger config in one go. Operator approves; system runs.
+- **18B · Chat with your data** — *"how many DMs sent last Tuesday?
+  which template performed best?"* → Gemini queries Firestore +
+  history via a function-calling layer and answers in plain English
+- **18C · AI weekly digest in your voice** — Gemini reads your week's
+  metrics + outcomes and writes the digest *as if you wrote it*
+- **18D · Daily "what should I do next?" assistant** — three
+  prioritized actions every morning based on state (paused campaign
+  needs attention, 12 unread DMs from leads, scrape budget unused)
+- **18E · AI prompt + reasoning visibility** — click any AI-generated
+  artifact → see the prompt + which brand fields + which context fed
+  it. Trust through transparency.
+- **18F · Pre-publish self-moderation** — every outbound DM / post
+  scanned by Gemini for things you'd regret: broken link, typo,
+  factual error vs. past statements, brand-tone drift, legally risky
+  claim, link to deleted resource
+- **18G · AI list cleaner** — analyze an existing list, flag handles
+  unlikely to convert (inactive, bot-shape, follower:following ratio
+  off, mismatched language, behavioral signals of spam accounts)
+- **18H · AI brand-profile improver** — *"your brand is thin on
+  audience + voice notes; here's what to add based on your top-
+  performing tweets"* — read your last 100 tweets, suggest fills
+- **18I · Voice control** — Whisper-driven hotkey ("Hey Xlift, pause
+  all campaigns" / "schedule a post about X for tomorrow noon")
+- **18J · Migration AI** — point at a competitor export
+  (xreacher / MagicReply / etc.) → Gemini maps it into Xlift's
+  schema and imports brand + lists + templates in one shot
+
+### Phase 19 — Workflow Engine (~3 weeks)
+
+Today the app has three overlapping abstractions: **campaigns**
+(start → run), **triggers** (event → action), **sequences** (step
+ladder). Phase 19 unifies them into one primitive that's strictly
+more powerful than any of them alone.
+
+- **19A · Workflow primitive** — every automation is a directed
+  graph: `trigger → delay → condition → action → branch → merge`.
+  Campaigns become "workflows with a list as the source." Triggers
+  become "workflows with an event source." Sequences become
+  "workflows with serial steps." One data model, one engine, one
+  worker handler dispatching all of them.
+- **19B · Workflow visualizer** — flowchart view of the graph,
+  drag-drop to edit nodes, hover any node to see fire history and
+  what's pending; live status (green = fired, yellow = waiting, red
+  = blocked)
+- **19C · Multi-path workflows** — forking branches that re-converge
+  ("if engaged → A; else → B; both converge to C"). Today's Phase
+  14B triggers + Phase 16E conditional branches handle linear
+  branching but not true graphs.
+- **19D · Wait-for-event blocks** — "*wait until they reply OR 7
+  days pass, whichever first*"; the engine subscribes to the event
+  source and resumes at first match
+- **19E · Cron-style standalone schedules** — workflows that aren't
+  tied to a campaign or a trigger ("*every Monday 9am, scrape my
+  followers, add new ones to list X*")
+- **19F · Workflow library** — save / share / clone any workflow as
+  a template; eventually a public marketplace
+- **19G · Debug mode** — step through a workflow on test data, see
+  exactly which branch fires at every node and why
+
+This is a refactor as much as a new feature: Phases 14B (triggers)
+and 16E (sequence mechanics) get re-implemented on top of the
+workflow primitive. After this, every new automation feature is
+"add a node type" instead of "build a new subsystem."
+
+### Phase 20 — Public API + Integration Platform (~4 weeks)
+
+The product is an island today. Phase 20 makes Xlift extensible —
+critical for agencies, power users, and enterprise demos.
+
+- **20A · Public REST API** — OAuth 2.0 tokens, scoped permissions,
+  rate-limited per plan. Every panel operation has an API equivalent.
+- **20B · GraphQL endpoint** — single-query access to "all my
+  campaigns + their actions + outcomes" for power users + agency
+  dashboards
+- **20C · Webhook event firehose** — emit every system event (action
+  dispatched, reply received, trigger fired, goal reached, campaign
+  paused) to a user-configured URL. Inverse of incoming webhooks
+  from Tier 6.
+- **20D · Native Zapier app** — public listing in Zapier marketplace
+  with pre-built actions + triggers. Same for Make.com + n8n. Three
+  native integrations unlock thousands of pre-built downstream
+  automations users get for free (Notion, Sheets, Slack, etc.).
+- **20E · Embeddable dashboard widgets** — agencies embed Xlift
+  charts on their client portal via iframe or React widget
+- **20F · API-first feature parity** — every new Phase 14-19 feature
+  ships with API endpoints first, UI second. Token usage inspection,
+  per-token throttling, revocation, audit
+- **20G · Developer docs site** at `developers.xlift.ai` with curl
+  / JS / Python examples and a sandbox playground
+
+### Phase 22 — Predictive intelligence (~3 weeks)
+
+Slots in after Phase 18 + Phase 17C's outcome-learning loop produce
+enough data to train against. Turns the AI from "drafts text" into
+"predicts outcomes":
+
+- **22A · Conversation outcome prediction** — at each step of a
+  sequence, predict the probability of reply / goal-reached / churn
+  ("this prospect has 60% chance of replying, 25% of booking")
+- **22B · Smart adaptive pacing** — engine learns from rate-limit
+  signals across accounts; auto-tightens caps *before* X tightens
+  for us (rather than after)
+- **22C · Account routing** — best-account-to-send-from prediction
+  per prospect (one of your accounts has historically converted
+  this prospect's demographic better; route there)
+- **22D · Reply-timing prediction** — when this specific prospect is
+  most likely to respond, optimize dispatch timing accordingly
+- **22E · Per-prospect engagement scoring** — every prospect gets a
+  rolling responsiveness score that informs sequence aggressiveness
+- **22F · Super-fan detection** — cross-account follower analysis;
+  "*these 23 people follow 4 of your 5 accounts — they're already
+  bought in*"
+- **22G · Content recommendation engine** — beyond the brand-driven
+  generator, AI recommends what to post based on niche trends + your
+  past wins
+
+### Phase 23 — Multi-platform expansion (~6 weeks, optional)
+
+Only if the strategic direction is to leave X-only. Architectural
+groundwork lets the engine run LinkedIn / Reddit / Threads / Bluesky
+without rewrites:
+
+- **23A · PlatformAdapter interface** — abstract over the
+  cookie-mode + scrape + post + DM + engage actions; X stays the
+  reference adapter, others slot in
+- **23B · Per-platform safety profiles** — LinkedIn has very
+  different anti-bot pressure than X (in some ways stricter, in
+  others looser); separate warming + pacing per platform
+- **23C · Cross-platform inbox + prospect identity resolution** —
+  same person on X and LinkedIn → one prospect entity, one
+  conversation timeline, one outcome record
+- **23D · Cross-platform sequences** — "warm them with a like on
+  LinkedIn, follow up on X 3 days later"
+- **23E · Platform-specific action types** — LinkedIn connection
+  requests, Reddit upvotes, Threads reposts; each gets first-class
+  representation in the workflow engine
+- **23F · Account portfolio across platforms** — manage a multi-
+  platform identity (founder's X + LinkedIn + Reddit) as a coherent
+  brand
+
+This is an explicit option: it doubles the addressable market but
+adds ~6 weeks of architectural work + ongoing platform-keep-up cost.
+
+### Updated four-+-five-phase roadmap totals
+
+- **Committed plan (14–17):** ~23 weeks
+- **Plus Phase 18 (AI Operator):** +4 weeks → ~27 weeks
+- **Plus Phase 19 (Workflow Engine):** +3 weeks → ~30 weeks
+- **Plus Phase 20 (Public API):** +4 weeks → ~34 weeks (~8 months)
+- **Plus Phase 22 (Predictive):** +3 weeks → ~37 weeks (~9 months)
+- **Plus Phase 23 (Multi-platform):** +6 weeks → ~43 weeks (~10 months)
+
+The 14–17 commitment is enough to ship a product that's
+operator-grade. 18–22 take it to *agent-grade*. 23 takes it to
+*multi-channel*. Each phase is independently shippable; pick the
+order based on which growth bottleneck shows up first.
 
 ## 8. Current capability snapshot
 
