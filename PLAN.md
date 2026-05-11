@@ -313,6 +313,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 10 — Multi-account hardening | ✅ shipped (v1) |
 | Phase 11 — Inbox v1.1 (Mentions + Replies) | ✅ shipped (v1) |
 | Phase 12 — Stripe billing + plan caps | ✅ shipped (v1) |
+| Phase 13 — Production hardening (DM action wire-up, approvals, warming, alerts, retries) | ✅ shipped (v1) |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -671,6 +672,59 @@ the user as if they have one X account:
   templates (shared library, accounts pick from), lists (same), brand
   base (override layered on top). These are not gaps — different
   semantics from the three above.
+
+### Phase 13 — Production hardening (~1 day)
+
+Audit pass against "what's missing for perfect end-to-end" turned up
+silent failures + operational gaps + polish that all need to land
+before the product is shippable to paying users.
+
+**13A — Silent failures (blocks the core flow)**
+- **DM send via worker.** `cookie-executor.sendDmHandler` returned a
+  stub error; DM Outreach campaigns dispatched by the worker errored
+  out silently. ChatPage's manual-send path already worked via
+  `routes/conversations` → `x.sendDM` → `x-raw.sendDm`. Fix wires
+  the same x-raw path into the action handler so materialized
+  `send-dm` actions actually send.
+- **Approval queue.** Campaigns with `approvalMode: true` queue
+  actions as `status='awaiting-approval'` but the panel had no
+  surface to approve them — they sat forever. Add an `/approvals`
+  page (list + per-action approve/reject + bulk approve) and
+  matching POST endpoints.
+
+**13B — Operational gaps**
+- **needs_reauth notifications.** Today an account that loses its
+  session just stops dispatching; the user finds out only when they
+  notice silence. Hook into the existing Telegram founder bot
+  (`lib/telegram.js`) and ping the owner when an account transitions
+  to `needs_reauth`.
+- **Auto-pause on health degradation.** Health score exists per
+  account but isn't enforced. Add a worker tick that pauses any
+  running campaign on an account with `healthScore < 40`, and a
+  status badge on the panel.
+- **Account warming.** Fresh accounts get hit by full caps on day
+  one and die fast. Add a `warmingStartedAt` field on `xAccounts`;
+  the Pacer multiplies the effective `dailyCaps` by a ramp factor
+  that grows from 0.2 on day 1 to 1.0 by day 14. UI toggle on the
+  account detail page.
+- **Onboarding breadcrumb.** New users land on an empty Overview
+  with no path forward. Surface a 4-step checklist (connect account
+  → set brand → build list → launch campaign) that disappears once
+  they've completed each step.
+
+**13C — Polish**
+- **Stale-claim sweep.** If the worker crashes mid-action, the
+  `in-progress` row never flips back. A 5-min sweep finds rows
+  older than 10 minutes and resets them to `queued`.
+- **Retry-with-backoff.** Transient failures (network, 5xx, 429)
+  today land in `failed` and stay there. Add up to 3 retries with
+  exponential backoff before the action is truly failed.
+- **Firestore indexes.** The `inboundEvents` route does
+  (userId, type, accountId, ts desc) queries that need composite
+  indexes. Add to `firestore.indexes.json` so they deploy cleanly.
+
+**Deferred to v1.1**: co-pilot full-auto poller (separately scoped
+in Phase 7's v1.1 follow-ups).
 
 ## 8. What's Already Done vs What's Needed
 
