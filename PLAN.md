@@ -295,7 +295,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 
 ## 7. Phased Roadmap
 
-### Status snapshot (2026-05-11)
+### Status snapshot (2026-05-11 — Phase 14 complete at v1)
 
 | Phase | Status |
 |-------|--------|
@@ -314,7 +314,7 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 11 — Inbox v1.1 (Mentions + Replies) | ✅ shipped (v1) |
 | Phase 12 — Stripe billing + plan caps | ✅ shipped (v1) |
 | Phase 13 — Production hardening (DM action wire-up, approvals, warming, alerts, retries) | ✅ shipped (v1) |
-| Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | 🟡 in progress — 14A/14C/14F shipped, 14E/14I shipped (subset); 14B/14D/14G/14H pending; 14E send-test+undo + 14I Sentry/dashboard deferred |
+| Phase 14 — Workflow & Intelligence Layer (calendar, triggers, context, prospects, trust, opt-out, notifications, reliability, observability) | ✅ shipped (v1, all sub-phases). Deferred to v2: 14E send-test+60s undo, 14G email digest, 14H idempotency+optimistic UI, 14I Sentry+dashboard |
 | Phase 15 — Platform quality sweep (code-split, autosave, worker isolation, prompt A/B, TypeScript, tests) | 📋 planned |
 | Phase 16 — Core capability depth (more X actions, content sourcing, smarter scraping/engagement, sequence branches, conversation depth, queue robustness) | 📋 planned |
 | Phase 17 — Operator workflow depth (smart lists, suppression, outcome learning, per-prospect context, inbox ergo, trigger chains, pacing depth, brand+prompt depth, template engine, workflow ergo) | 📋 planned |
