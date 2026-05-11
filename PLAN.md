@@ -322,7 +322,6 @@ Net effect: predictable, debuggable, cheaper. The AI is a tool the system *calls
 | Phase 19 — Workflow Engine (unified trigger+delay+condition+action graph; visualizer; multi-path; wait-for-event; cron schedules; library; debug mode) | 📋 planned |
 | Phase 20 — Public API + Integration Platform (REST + GraphQL; webhook firehose; native Zapier/Make/n8n; embeddable widgets; developer docs) | 📋 planned |
 | Phase 22 — Predictive intelligence (outcome prediction; smart pacing; routing; reply-timing; engagement score; super-fan detection) | 📋 planned |
-| Phase 23 — Multi-platform expansion (PlatformAdapter abstraction; LinkedIn/Reddit/Threads/Bluesky; cross-platform inbox + identity) | 📋 planned |
 
 ### Phase 0 — Foundation (~1.5 weeks)
 - New repos: `xlift-backend`, `xlift-dashboard`
@@ -1591,46 +1590,28 @@ enough data to train against. Turns the AI from "drafts text" into
   generator, AI recommends what to post based on niche trends + your
   past wins
 
-### Phase 23 — Multi-platform expansion (~6 weeks, optional)
-
-Only if the strategic direction is to leave X-only. Architectural
-groundwork lets the engine run LinkedIn / Reddit / Threads / Bluesky
-without rewrites:
-
-- **23A · PlatformAdapter interface** — abstract over the
-  cookie-mode + scrape + post + DM + engage actions; X stays the
-  reference adapter, others slot in
-- **23B · Per-platform safety profiles** — LinkedIn has very
-  different anti-bot pressure than X (in some ways stricter, in
-  others looser); separate warming + pacing per platform
-- **23C · Cross-platform inbox + prospect identity resolution** —
-  same person on X and LinkedIn → one prospect entity, one
-  conversation timeline, one outcome record
-- **23D · Cross-platform sequences** — "warm them with a like on
-  LinkedIn, follow up on X 3 days later"
-- **23E · Platform-specific action types** — LinkedIn connection
-  requests, Reddit upvotes, Threads reposts; each gets first-class
-  representation in the workflow engine
-- **23F · Account portfolio across platforms** — manage a multi-
-  platform identity (founder's X + LinkedIn + Reddit) as a coherent
-  brand
-
-This is an explicit option: it doubles the addressable market but
-adds ~6 weeks of architectural work + ongoing platform-keep-up cost.
-
-### Updated four-+-five-phase roadmap totals
+### Updated roadmap totals
 
 - **Committed plan (14–17):** ~23 weeks
 - **Plus Phase 18 (AI Operator):** +4 weeks → ~27 weeks
 - **Plus Phase 19 (Workflow Engine):** +3 weeks → ~30 weeks
 - **Plus Phase 20 (Public API):** +4 weeks → ~34 weeks (~8 months)
 - **Plus Phase 22 (Predictive):** +3 weeks → ~37 weeks (~9 months)
-- **Plus Phase 23 (Multi-platform):** +6 weeks → ~43 weeks (~10 months)
 
 The 14–17 commitment is enough to ship a product that's
-operator-grade. 18–22 take it to *agent-grade*. 23 takes it to
-*multi-channel*. Each phase is independently shippable; pick the
-order based on which growth bottleneck shows up first.
+operator-grade. 18–22 take it to *agent-grade*. Each phase is
+independently shippable; pick the order based on which growth
+bottleneck shows up first.
+
+**X-only strategic commitment:** multi-platform expansion (LinkedIn
+/ Reddit / Threads / Bluesky) is explicitly off the roadmap. The
+product is X-native end-to-end — cookie-mode auth, Apify scrapers,
+rettiwt transport, the warming model, all tuned for X's specific
+anti-bot signal landscape. Going multi-platform would double the
+addressable market but require a PlatformAdapter refactor + ongoing
+platform-keep-up cost (X's API + counter-bot tactics change
+frequently; tracking two platforms doubles that ongoing burden).
+Better to be unambiguously the best X tool than mediocre at four.
 
 ## 8. Current capability snapshot
 
